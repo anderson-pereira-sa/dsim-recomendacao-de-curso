@@ -16,10 +16,11 @@ from sqlalchemy import create_engine
 def consulta(query: str) -> pd.DataFrame:
     server = r"fbd101-001\HML"
     database = "DB_OBSERVATORIO"
+
     connection_string = (
         "mssql+pyodbc://@"
         f"{server}/{database}"
-        "?driver=ODBC Driver 17 for SQL Server"
+        "?driver=ODBC+Driver+17+for+SQL+Server"
         "&trusted_connection=yes"
         "&TrustServerCertificate=yes"
     )
@@ -27,11 +28,9 @@ def consulta(query: str) -> pd.DataFrame:
     engine = create_engine(connection_string)
 
     try:
-        df = pd.read_sql_query(query, engine)
-        return df
+        return pd.read_sql_query(query, engine)
     except Exception as e:
         raise RuntimeError(f"Erro na consulta SQL: {e}")
-
 
 # >>>>>>> - Função para limpar texto - <<<<<<< #
 def limpar_texto(s: pd.Series) -> pd.Series:
@@ -49,7 +48,7 @@ def limpar_texto(s: pd.Series) -> pd.Series:
 
 ####################################################################################################
 # >>>>>>> - MUNICIPIO - <<<<<<< #
-municipio_unid = pd.read_excel(r"C:\Users\anderson.pereira\OneDrive - Sistema FIEB\Inteligência de Mercado\Data Science\DeploymentML\Streamlit_dsim_ML\ds-im-modelo-de-recomendacao-de-curso\GEO_UO_MAIS_PROXIMA.xlsx",
+municipio_unid = pd.read_excel(r"C:\Users\anderson.pereira\OneDrive - Sistema FIEB\Inteligência de Mercado\Data Science\DeploymentML\dsim-recomendacao-de-curso\GEO_UO_MAIS_PROXIMA.xlsx",
                                                sheet_name='BASE', header=0)
 
 municipio_unid['MUNICIPIO_ORIGEM'] = municipio_unid['MUNICIPIO_ORIGEM'].str.upper()
@@ -308,7 +307,7 @@ df_caged_2['PRESSAO_SALARIAL'] = df_caged_2.apply(lambda row: row['SALARIO_ADMIT
 
 ####################################################################################################
 # >>>>>>> - FONTE CURSOS TÉCNICOS SENAI [CUBO] - <<<<<<< #
-caminho_pasta = r"C:\Users\anderson.pereira\OneDrive - Sistema FIEB\Inteligência de Mercado\Data Science\DeploymentML\Streamlit_dsim_ML\Cubo_CHP"
+caminho_pasta = r"C:\Users\anderson.pereira\OneDrive - Sistema FIEB\Inteligência de Mercado\Data Science\DeploymentML\dsim-recomendacao-de-curso\Cubo_CHP"
 
 padrao_arquivos = os.path.join(caminho_pasta, "*.xlsx")
 lista_arquivos = glob.glob(padrao_arquivos)
@@ -395,7 +394,7 @@ df_CHP_Pagante_igual_['UNIDADE'] = df_CHP_Pagante_igual_['UNIDADE'].replace({'LE
 
 ####################################################################################################
 # >>>>>>> - FONTE CURSOS TÉCNICOS SENAI [ITINERARIO - CBO] - <<<<<<< #
-flle_iti = r"C:\Users\anderson.pereira\OneDrive - Sistema FIEB\Inteligência de Mercado\Data Science\DeploymentML\Streamlit_dsim_ML\dados_extraidos_final.xlsx"
+flle_iti = r"C:\Users\anderson.pereira\OneDrive - Sistema FIEB\Inteligência de Mercado\Data Science\DeploymentML\dsim-recomendacao-de-curso\dados_extraidos_final.xlsx"
 itinerario = pd.read_excel(flle_iti, sheet_name='Sheet1')
 itinerario['MODALIDADE'] = np.where(itinerario['Nome do Item'].str.contains('Aperfeiçoamento|Especialista|Especialização', case=False, na=False), 'CAEP', 'CHP')
 itinerario['Nome do Item'] = itinerario['Nome do Item'].str.upper()
@@ -473,6 +472,6 @@ join_CHP_itinerario_2025_6_caged['FAIXA_MAT'] = pd.cut(join_CHP_itinerario_2025_
 cols_num = join_CHP_itinerario_2025_6_caged.select_dtypes(include='number').columns
 join_CHP_itinerario_2025_6_caged[cols_num] = (join_CHP_itinerario_2025_6_caged[cols_num].fillna(0))
 
-join_CHP_itinerario_2025_6_caged.to_pickle(r"C:\Users\anderson.pereira\OneDrive - Sistema FIEB\Inteligência de Mercado\Data Science\DeploymentML\Streamlit_dsim_ML\check_dataset_0.pkl")
-print("Dataset final processado e salvo como check_dataset_0.pkl")
+join_CHP_itinerario_2025_6_caged.to_pickle(r"C:\Users\anderson.pereira\OneDrive - Sistema FIEB\Inteligência de Mercado\Data Science\DeploymentML\dsim-recomendacao-de-curso\dataset.pkl")
+print("Dataset final processado e salvo como dataset.pkl")
 

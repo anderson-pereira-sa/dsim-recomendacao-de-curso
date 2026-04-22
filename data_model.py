@@ -11,7 +11,7 @@ from sklearn.utils.class_weight import compute_class_weight
 from xgboost import XGBClassifier
 
 
-dataset_0 = pickle.load(open('check_dataset_0.pkl', 'rb'))
+dataset_0 = pickle.load(open('dataset.pkl', 'rb'))
 
 categoricas_ohencoder = ['ANO','UNIDADE', 'CURSO']
 numericas_ohencoder = [
@@ -82,6 +82,5 @@ with open("numericas.pkl", "wb") as f:
 
 with open("feature_order.pkl", "wb") as f:
     pickle.dump(numericas_ohencoder + list(encoder.get_feature_names_out()),f)
-
 
 print('Modelo salvo com sucesso!')

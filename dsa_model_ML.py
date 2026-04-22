@@ -24,7 +24,7 @@ st.caption("Machine Learning aplicado à análise de risco e oportunidade em mat
 
 @st.cache_data
 def load_data():
-    return pickle.load(open("check_dataset_0.pkl", "rb"))
+    return pickle.load(open("dataset.pkl", "rb"))
 
 df_matricula = load_data()
 
