@@ -10,12 +10,12 @@ from xgboost import XGBClassifier
 # ==========================================================
 
 st.set_page_config(
-    page_title="Inteligência de Mercado – SENAI/BA",
+    page_title="Inteligência de Mercado",
     page_icon="📊",
     layout="wide"
 )
 
-st.title("Modelo Recomendação de Curso - SENAI/BA")
+st.title("Modelo Recomendação de Curso")
 st.caption("Machine Learning aplicado à análise de risco e oportunidade em matrículas")
 
 # ==========================================================
