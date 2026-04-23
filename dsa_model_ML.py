@@ -534,8 +534,17 @@ with tab2:
             saldo_sim = st.number_input(labels_exibicao['SALDO_EMPREGO'], value=int(linha_real['SALDO_EMPREGO']))
 
         linha_sim = linha_real.copy()
-        # linha_sim[numericas_ohencoder] = [emp_sim, vinc_sim, conc_sim, matc_sim, sal_sim, saldo_sim]
-        linha_sim[numericas_ohencoder] = [emp_sim, conc_sim, sal_sim, saldo_sim]
+        valores_simulados = {
+            'QTD_EMPRESAS': emp_sim,
+            # 'QTD_VINCULOS': vinc_sim,
+            'QTD_CONC': conc_sim,
+            'SALARIO_MEDIO': sal_sim,
+            'SALDO_EMPREGO': saldo_sim
+            }
+
+        for col, val in valores_simulados.items():
+            linha_sim[col] = val
+
 
         probs_sim = modelo.predict_proba(build_X(linha_sim))[0]
 
