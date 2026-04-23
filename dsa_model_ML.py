@@ -96,6 +96,10 @@ def impacto_variaveis_locais(linha_real, linha_sim, faixa_idx, delta_padrao=0.10
     prob_base = modelo.predict_proba(X_base)[0][faixa_idx]
 
     for var in numericas_ohencoder:
+
+        if var not in linha_sim.index:
+            continue
+
         linha_temp = linha_sim.copy()
         valor_sim = linha_sim[var]
 
@@ -448,6 +452,26 @@ with tab2:
     # Usa o último ano como cenário real
     linha_real = df_base_modelo.iloc[-1].copy()
 
+    if curso_sel == 'GLOBAL':
+        linha_real = (
+            df_matricula[
+                (df_matricula['UNIDADE'] == unidade_sel)
+            ]
+            .sort_values('ANO')
+            .iloc[-1]
+            .copy()
+        )
+    else:
+        linha_real = (
+            df_matricula[
+                (df_matricula['UNIDADE'] == unidade_sel) &
+                (df_matricula['CURSO'] == curso_sel)
+            ]
+            .sort_values('ANO')
+            .iloc[-1]
+            .copy()
+        )
+
     # ---------- PROBABILIDADE REAL ----------
     probs_real = modelo.predict_proba(build_X(linha_real))[0]
 
@@ -506,18 +530,10 @@ with tab2:
         st.subheader("📋 Contexto do Município Selecionado")
 
         df_contexto_historico = (
-                df_matricula[
+            df_matricula[
                 (df_matricula['UNIDADE'] == unidade_sel) &
                 ((curso_sel == 'GLOBAL') | (df_matricula['CURSO'] == curso_sel))
             ]
-            .groupby(['ANO', 'UNIDADE', 'CURSO'], as_index=False)
-            .agg(
-                QTD_CONC=('QTD_CONC', 'max'),
-                QTD_EMPRESAS=('QTD_EMPRESAS', 'max'),
-                SALARIO_MEDIO=('SALARIO_MEDIO', 'mean'),
-                SALDO_EMPREGO=('SALDO_EMPREGO', 'sum'),
-                MAT_PAG=('MAT_PAG', 'sum')
-            )
             .sort_values('ANO')
         )
 
