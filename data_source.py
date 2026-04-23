@@ -716,17 +716,17 @@ join_CHP_itinerario_2025_4_caged = join_CHP_itinerario_2025_3_caged.merge(df_cur
 join_CHP_itinerario_2025_5_caged = join_CHP_itinerario_2025_4_caged.groupby(['ANO','CURSO', 'UNIDADE'],
                                                                              as_index=False).agg({'MAT_PAG': 'sum',
                                                                                                   'QTD_CONC': 'sum', 
-                                                                                                  'QTD_MAT_CONC': 'sum', 
+                                                                                                #   'QTD_MAT_CONC': 'sum', 
                                                                                                   'QTD_EMPRESAS': 'sum', 
-                                                                                                  'QTD_VINCULOS': 'sum', 
-                                                                                                  'SUM_ADMITIDOS': 'sum', 
-                                                                                                  'SUM_DESLIGADOS': 'sum', 
+                                                                                                #   'QTD_VINCULOS': 'sum', 
+                                                                                                #   'SUM_ADMITIDOS': 'sum', 
+                                                                                                #   'SUM_DESLIGADOS': 'sum', 
                                                                                                   'SALDO_EMPREGO': 'sum', 
                                                                                                   'SALARIO_MEDIO': 'mean'})
 
 join_CHP_itinerario_2025_6_caged = join_CHP_itinerario_2025_5_caged.copy(deep=True)
 # join_CHP_itinerario_2025_6_caged['PRESSAO_SALARIAL'] = join_CHP_itinerario_2025_6_caged['PRESSAO_SALARIAL'].fillna(0).astype(float)
-join_CHP_itinerario_2025_6_caged = join_CHP_itinerario_2025_6_caged[(join_CHP_itinerario_2025_6_caged['SALDO_EMPREGO'].notnull()) & (join_CHP_itinerario_2025_6_caged['QTD_VINCULOS'].notnull())].reset_index(drop=True)
+join_CHP_itinerario_2025_6_caged = join_CHP_itinerario_2025_6_caged[(join_CHP_itinerario_2025_6_caged['SALDO_EMPREGO'].notnull())].reset_index(drop=True)
 
 labels_faixas = ['≤20', '21–40', '>41']
 join_CHP_itinerario_2025_6_caged['FAIXA_MAT'] = pd.cut(join_CHP_itinerario_2025_6_caged['MAT_PAG'],

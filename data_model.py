@@ -16,9 +16,7 @@ dataset_0 = pickle.load(open('dataset.pkl', 'rb'))
 categoricas_ohencoder = ['ANO','UNIDADE', 'CURSO']
 numericas_ohencoder = [
     'QTD_EMPRESAS',
-    # 'QTD_VINCULOS',
     'QTD_CONC',
-    # 'QTD_MAT_CONC',
     'SALARIO_MEDIO',
     'SALDO_EMPREGO'
 ]

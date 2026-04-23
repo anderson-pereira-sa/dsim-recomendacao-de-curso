@@ -77,7 +77,7 @@ FAIXAS = list(le.classes_)
 # ==========================================================
 
 def build_X(row):
-    row = row.copy()
+    row = row.copy(deep=True)
     for col in numericas_ohencoder:
         if col not in row.index:
             row[col] = 0.0
@@ -100,7 +100,7 @@ def impacto_variaveis_locais(linha_real, linha_sim, faixa_idx, delta_padrao=0.10
         if var not in linha_sim.index:
             continue
 
-        linha_temp = linha_sim.copy()
+        linha_temp = linha_sim.copy(deep=True)
         valor_sim = linha_sim[var]
 
         if valor_sim > 0:
@@ -150,20 +150,15 @@ def probabilidades_por_ano(df_base, unidade, curso):
     resultados = []
 
     df_base_contexto = (
-        df_base[
-            (df_base['UNIDADE'] == unidade) &
-            ((curso == 'GLOBAL') | (df_base['CURSO'] == curso))
-        ]
-        .sort_values('ANO')
-    )
+        df_base[(df_base['UNIDADE'] == unidade) &
+                ((curso == 'GLOBAL') | (df_base['CURSO'] == curso))].sort_values('ANO'))
 
     if df_base_contexto.empty:
         return pd.DataFrame(columns=['ANO', *FAIXAS])
 
-    linha_base = df_base_contexto.iloc[-1].copy()
-
+    linha_base = df_base_contexto.iloc[-1].copy(deep=True)
     for ano in sorted(df_base['ANO'].unique()):
-        linha_temp = linha_base.copy()
+        linha_temp = linha_base.copy(deep=True)
         linha_temp['ANO'] = ano
 
         probs = modelo.predict_proba(build_X(linha_temp))[0]
@@ -242,11 +237,11 @@ def probabilidades_por_ano(df_base, unidade, curso):
         return pd.DataFrame(columns=['ANO', *FAIXAS])
 
     # Linha base estrutural (último ano disponível)
-    linha_base = df_base_contexto.iloc[-1].copy()
+    linha_base = df_base_contexto.iloc[-1].copy(deep=True)
 
     # Calcula probabilidades variando SOMENTE o ano
     for ano in sorted(df_base['ANO'].unique()):
-        linha_temp = linha_base.copy()
+        linha_temp = linha_base.copy(deep=True)
         linha_temp['ANO'] = ano
 
         probs = modelo.predict_proba(build_X(linha_temp))[0]
@@ -297,11 +292,6 @@ def grafico_real_linhas(df_series):
     return fig
 
 def analise_executiva_prob_real(faixa_dominante, prob_dominante):
-    """
-    Gera análise executiva da Probabilidade REAL
-    com base no ÍNDICE da faixa dominante (não na string).
-    """
-
     idx = FAIXAS.index(faixa_dominante)
 
     # Mapeamento SEMÂNTICO por índice
@@ -427,45 +417,20 @@ with tab2:
         ['GLOBAL'] + lista_cursos)
 
     if curso_sel == 'GLOBAL':
-        df_curso = df_unidade.copy()
+        df_curso = df_unidade.copy(deep=True)
     else:
         df_curso = df_unidade[df_unidade['CURSO'] == curso_sel]
-
-    # MUNICÍPIO (COM GLOBAL)
-    # lista_municipios = sorted(df_curso['MUNICIPIO'].unique())
-    # municipio_sel = st.sidebar.selectbox(
-    #     "MUNICÍPIO ALUNO",
-    #     ['GLOBAL'] + lista_municipios
-    # )
-
-    # if municipio_sel == 'GLOBAL':
-    #     df_municipio = df_curso.copy()
-    # else:
-    #     df_municipio = df_curso[df_curso['MUNICIPIO'] == municipio_sel]
 
     # ==========================================================
     # LINHA REPRESENTATIVA (MESMA BASE DA TABELA)
     # ==========================================================
 
     if curso_sel == 'GLOBAL':
-        linha_real = (
-            df_matricula[
-                (df_matricula['UNIDADE'] == unidade_sel)
-            ]
-            .sort_values('ANO')
-            .iloc[-1]
-            .copy()
-        )
+        linha_real = (df_matricula[(df_matricula['UNIDADE'] == unidade_sel)].sort_values(['ANO','CURSO']).iloc[-1].copy(deep=True))
     else:
-        linha_real = (
-            df_matricula[
+        linha_real = (df_matricula[
                 (df_matricula['UNIDADE'] == unidade_sel) &
-                (df_matricula['CURSO'] == curso_sel)
-            ]
-            .sort_values('ANO')
-            .iloc[-1]
-            .copy()
-        )
+                (df_matricula['CURSO'] == curso_sel)].sort_values(['ANO','CURSO']).iloc[-1].copy(deep=True))
 
     # ---------- PROBABILIDADE REAL ----------
     probs_real = modelo.predict_proba(build_X(linha_real))[0]
@@ -566,7 +531,7 @@ with tab2:
             sal_sim = st.number_input(labels_exibicao['SALARIO_MEDIO'], value=float(linha_real['SALARIO_MEDIO']))
             saldo_sim = st.number_input(labels_exibicao['SALDO_EMPREGO'], value=int(linha_real['SALDO_EMPREGO']))
 
-        linha_sim = linha_real.copy()
+        linha_sim = linha_real.copy(deep=True)
         valores_simulados = {
             'QTD_EMPRESAS': emp_sim,
             # 'QTD_VINCULOS': vinc_sim,
