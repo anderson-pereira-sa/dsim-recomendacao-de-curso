@@ -18,7 +18,7 @@ st.set_page_config(
 st.title("Modelo Recomendação de Curso")
 st.caption("Machine Learning aplicado à análise de risco e oportunidade em matrículas")
 
-# ==========================================================
+# =========================================================
 # LOAD DATA
 # ==========================================================
 
