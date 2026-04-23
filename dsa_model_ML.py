@@ -77,9 +77,16 @@ FAIXAS = list(le.classes_)
 # ==========================================================
 
 def build_X(row):
+    row = row.copy()
+    for col in numericas_ohencoder:
+        if col not in row.index:
+            row[col] = 0.0
+
     X_cat = encoder.transform(row[categoricas_ohencoder].to_frame().T)
     X_num = row[numericas_ohencoder].astype(float).values.reshape(1, -1)
+
     return np.hstack([X_num, X_cat]).astype(float)
+
 
 
 def impacto_variaveis_locais(linha_real, linha_sim, faixa_idx, delta_padrao=0.10, epsilon=1.0):
