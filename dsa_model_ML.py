@@ -33,8 +33,8 @@ df_matricula = load_data()
 # ==========================================================
 
 labels_exibicao = {
-    'QTD_CONC_INEP': 'CONCORRÊNCIA (INEP)',
-    'QTD_MAT_CONC': 'MATRÍCULA CONC. (INEP)',
+    'QTD_CONC': 'CONCORRÊNCIA (INEP)',
+    # 'QTD_MAT_CONC': 'MATRÍCULA CONC. (INEP)',
     'QTD_EMPRESAS': 'EMPRESAS (RAIS)',
     'QTD_VINCULOS': 'VÍNCULOS (RAIS)',
     'SALARIO_MEDIO': 'SALÁRIO MÉDIO (RAIS)',
@@ -490,7 +490,8 @@ with tab2:
         ][
             [
                 'ANO','MUNICIPIO','CURSO',
-                'QTD_CONC_INEP','QTD_MAT_CONC',
+                'QTD_CONC',
+                # 'QTD_MAT_CONC',
                 'QTD_EMPRESAS','QTD_VINCULOS',
                 'SALARIO_MEDIO','SALDO_EMPREGO','MAT_PAG'
             ]
@@ -518,11 +519,11 @@ with tab2:
         c1, c2, c3 = st.columns(3)
 
         with c1:
-            conc_sim = st.number_input(labels_exibicao['QTD_CONC_INEP'], value=int(linha_real['QTD_CONC_INEP']))
+            conc_sim = st.number_input(labels_exibicao['QTD_CONC'], value=int(linha_real['QTD_CONC']))
             emp_sim = st.number_input(labels_exibicao['QTD_EMPRESAS'], value=int(linha_real['QTD_EMPRESAS']))
 
         with c2:
-            matc_sim = st.number_input(labels_exibicao['QTD_MAT_CONC'], value=int(linha_real['QTD_MAT_CONC']))
+            # matc_sim = st.number_input(labels_exibicao['QTD_MAT_CONC'], value=int(linha_real['QTD_MAT_CONC']))
             vinc_sim = st.number_input(labels_exibicao['QTD_VINCULOS'], value=int(linha_real['QTD_VINCULOS']))
 
         with c3:
@@ -530,7 +531,8 @@ with tab2:
             saldo_sim = st.number_input(labels_exibicao['SALDO_EMPREGO'], value=int(linha_real['SALDO_EMPREGO']))
 
         linha_sim = linha_real.copy()
-        linha_sim[numericas_ohencoder] = [emp_sim, vinc_sim, conc_sim, matc_sim, sal_sim, saldo_sim]
+        # linha_sim[numericas_ohencoder] = [emp_sim, vinc_sim, conc_sim, matc_sim, sal_sim, saldo_sim]
+        linha_sim[numericas_ohencoder] = [emp_sim, vinc_sim, conc_sim, sal_sim, saldo_sim]
 
         probs_sim = modelo.predict_proba(build_X(linha_sim))[0]
 

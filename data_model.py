@@ -17,8 +17,7 @@ categoricas_ohencoder = ['ANO','UNIDADE', 'CURSO']
 numericas_ohencoder = [
     'QTD_EMPRESAS',
     'QTD_VINCULOS',
-    'QTD_CONC_INEP',
-    'QTD_MAT_CONC',
+    'QTD_CONC',
     'SALARIO_MEDIO',
     'SALDO_EMPREGO'
 ]
