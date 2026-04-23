@@ -37,7 +37,7 @@ labels_exibicao = {
     # 'QTD_MAT_CONC': 'MATRÍCULA CONC. (INEP)',
     'QTD_EMPRESAS': 'EMPRESAS (RAIS)',
     # 'QTD_VINCULOS': 'VÍNCULOS (RAIS)',
-    'SALARIO_MEDIO': 'SALÁRIO MÉDIO (RAIS)',
+    'SALARIO_MEDIO': 'SALÁRIO MÉDIO (CAGED)',
     'SALDO_EMPREGO': 'SALDO EMPREGO (CAGED)'
 }
 
@@ -192,14 +192,14 @@ def grafico_real_barras_horizontais(probs_atual, ano_atual):
 
     return fig
 
-def probabilidades_por_ano(df_base, unidade, curso, municipio):
+def probabilidades_por_ano(df_base, unidade, curso):
     resultados = []
 
     # Filtra o contexto estrutural
     df_base_contexto = df_base[
         (df_base['UNIDADE'] == unidade) &
-        ((curso == 'GLOBAL') | (df_base['CURSO'] == curso)) &
-        ((municipio == 'GLOBAL') | (df_base['MUNICIPIO'] == municipio))
+        ((curso == 'GLOBAL') | (df_base['CURSO'] == curso)) 
+        # ((municipio == 'GLOBAL') | (df_base['MUNICIPIO'] == municipio))
     ].sort_values('ANO')
 
     # ✅ TRATAMENTO DE BORDA (caso não haja dados)
@@ -390,8 +390,7 @@ with tab2:
     lista_cursos = sorted(df_unidade['CURSO'].unique())
     curso_sel = st.sidebar.selectbox(
         "CURSO",
-        ['GLOBAL'] + lista_cursos
-    )
+        ['GLOBAL'] + lista_cursos)
 
     if curso_sel == 'GLOBAL':
         df_curso = df_unidade.copy()
@@ -399,31 +398,28 @@ with tab2:
         df_curso = df_unidade[df_unidade['CURSO'] == curso_sel]
 
     # MUNICÍPIO (COM GLOBAL)
-    lista_municipios = sorted(df_curso['MUNICIPIO'].unique())
-    municipio_sel = st.sidebar.selectbox(
-        "MUNICÍPIO ALUNO",
-        ['GLOBAL'] + lista_municipios
-    )
+    # lista_municipios = sorted(df_curso['MUNICIPIO'].unique())
+    # municipio_sel = st.sidebar.selectbox(
+    #     "MUNICÍPIO ALUNO",
+    #     ['GLOBAL'] + lista_municipios
+    # )
 
-    if municipio_sel == 'GLOBAL':
-        df_municipio = df_curso.copy()
-    else:
-        df_municipio = df_curso[df_curso['MUNICIPIO'] == municipio_sel]
+    # if municipio_sel == 'GLOBAL':
+    #     df_municipio = df_curso.copy()
+    # else:
+    #     df_municipio = df_curso[df_curso['MUNICIPIO'] == municipio_sel]
 
     # ==========================================================
     # LINHA REPRESENTATIVA (RESPEITANDO GLOBAL)
     # ==========================================================
 
-    if (curso_sel == 'GLOBAL') or (municipio_sel == 'GLOBAL'):
-        linha_real = df_municipio.copy()
-
+    if (curso_sel == 'GLOBAL'):
+        linha_real = df_curso.copy()
         for col in numericas_ohencoder:
             linha_real[col] = linha_real[col].mean()
-
         linha_real = linha_real.iloc[0]
-
     else:
-        linha_real = df_municipio.iloc[0]
+        linha_real = df_curso.iloc[0]
 
     # ---------- PROBABILIDADE REAL ----------
     probs_real = modelo.predict_proba(build_X(linha_real))[0]
@@ -470,8 +466,8 @@ with tab2:
         df_series = probabilidades_por_ano(
             df_base=df_matricula,
             unidade=unidade_sel,
-            curso=curso_sel,
-            municipio=municipio_sel
+            curso=curso_sel
+            # municipio=municipio_sel
         )
 
         st.plotly_chart(
@@ -484,11 +480,11 @@ with tab2:
 
         df_contexto_historico = df_matricula[
             (df_matricula['UNIDADE'] == unidade_sel) &
-            ((curso_sel == 'GLOBAL') | (df_matricula['CURSO'] == curso_sel)) &
-            ((municipio_sel == 'GLOBAL') | (df_matricula['MUNICIPIO'] == municipio_sel))
+            ((curso_sel == 'GLOBAL') | (df_matricula['CURSO'] == curso_sel)) #&
+            # ((municipio_sel == 'GLOBAL') | (df_matricula['MUNICIPIO'] == municipio_sel))
         ][
             [
-                'ANO','MUNICIPIO','CURSO',
+                'ANO', 'CURSO',
                 'QTD_CONC',
                 # 'QTD_MAT_CONC',
                 'QTD_EMPRESAS',
