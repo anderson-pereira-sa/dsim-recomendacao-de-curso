@@ -196,11 +196,21 @@ def probabilidades_por_ano(df_base, unidade, curso):
     resultados = []
 
     # Filtra o contexto estrutural
-    df_base_contexto = df_base[
-        (df_base['UNIDADE'] == unidade) &
-        ((curso == 'GLOBAL') | (df_base['CURSO'] == curso)) 
-        # ((municipio == 'GLOBAL') | (df_base['MUNICIPIO'] == municipio))
-    ].sort_values('ANO')
+    df_base_contexto = (
+        df_base[
+            (df_base['UNIDADE'] == unidade) &
+            ((curso == 'GLOBAL') | (df_base['CURSO'] == curso))
+        ]
+        .groupby(['ANO', 'UNIDADE', 'CURSO'], as_index=False)
+        .agg(
+            QTD_CONC=('QTD_CONC', 'max'),
+            QTD_EMPRESAS=('QTD_EMPRESAS', 'max'),
+            SALARIO_MEDIO=('SALARIO_MEDIO', 'mean'),
+            SALDO_EMPREGO=('SALDO_EMPREGO', 'sum'),
+            MAT_PAG=('MAT_PAG', 'sum')
+        )
+        .sort_values('ANO')
+        )
 
     # ✅ TRATAMENTO DE BORDA (caso não haja dados)
     if df_base_contexto.empty:
@@ -410,16 +420,26 @@ with tab2:
     #     df_municipio = df_curso[df_curso['MUNICIPIO'] == municipio_sel]
 
     # ==========================================================
-    # LINHA REPRESENTATIVA (RESPEITANDO GLOBAL)
+    # LINHA REPRESENTATIVA (COERENTE COM O DATASET AGREGADO)
     # ==========================================================
 
-    if (curso_sel == 'GLOBAL'):
-        linha_real = df_curso.copy()
-        for col in numericas_ohencoder:
-            linha_real[col] = linha_real[col].mean()
-        linha_real = linha_real.iloc[0]
-    else:
-        linha_real = df_curso.iloc[0]
+    df_base_modelo = (
+        df_matricula[
+            (df_matricula['UNIDADE'] == unidade_sel) &
+            ((curso_sel == 'GLOBAL') | (df_matricula['CURSO'] == curso_sel))
+        ]
+        .groupby(['ANO', 'UNIDADE', 'CURSO'], as_index=False)
+        .agg(
+            QTD_CONC=('QTD_CONC', 'max'),
+            QTD_EMPRESAS=('QTD_EMPRESAS', 'max'),
+            SALARIO_MEDIO=('SALARIO_MEDIO', 'mean'),
+            SALDO_EMPREGO=('SALDO_EMPREGO', 'sum'),
+            MAT_PAG=('MAT_PAG', 'sum')
+        )
+        .sort_values('ANO')
+    )
+    # Usa o último ano como cenário real
+    linha_real = df_base_modelo.iloc[-1].copy()
 
     # ---------- PROBABILIDADE REAL ----------
     probs_real = modelo.predict_proba(build_X(linha_real))[0]
@@ -478,19 +498,21 @@ with tab2:
         # ---------- TABELA HISTÓRICA ----------
         st.subheader("📋 Contexto do Município Selecionado")
 
-        df_contexto_historico = (df_matricula[
+        df_contexto_historico = (
+                df_matricula[
                 (df_matricula['UNIDADE'] == unidade_sel) &
                 ((curso_sel == 'GLOBAL') | (df_matricula['CURSO'] == curso_sel))
             ]
             .groupby(['ANO', 'UNIDADE', 'CURSO'], as_index=False)
-            .agg(QTD_CONC=('QTD_CONC', 'max'),
-                 QTD_EMPRESAS=('QTD_EMPRESAS', 'max'),
-                 SALARIO_MEDIO=('SALARIO_MEDIO', 'mean'),
-                 SALDO_EMPREGO=('SALDO_EMPREGO', 'sum'),
-                 MAT_PAG=('MAT_PAG', 'sum')
-            ).sort_values('ANO'))
-
-
+            .agg(
+                QTD_CONC=('QTD_CONC', 'max'),
+                QTD_EMPRESAS=('QTD_EMPRESAS', 'max'),
+                SALARIO_MEDIO=('SALARIO_MEDIO', 'mean'),
+                SALDO_EMPREGO=('SALDO_EMPREGO', 'sum'),
+                MAT_PAG=('MAT_PAG', 'sum')
+            )
+            .sort_values('ANO')
+        )
 
         df_contexto_historico = df_contexto_historico.rename(columns=labels_exibicao)
 
