@@ -146,20 +146,33 @@ def texto_executivo_dinamico(faixa_nome, impactos_dict):
         f"{efeito}, caracterizando uma **{tipo}** no perfil de demanda."
     )
 
-def probabilidades_por_ano(df_base, linha_ref):
+def probabilidades_por_ano(df_base, unidade, curso):
     resultados = []
-    anos = sorted(df_base['ANO'].unique())
-    for ano in anos:
-        linha_temp = linha_ref.copy()
+
+    df_base_contexto = (
+        df_base[
+            (df_base['UNIDADE'] == unidade) &
+            ((curso == 'GLOBAL') | (df_base['CURSO'] == curso))
+        ]
+        .sort_values('ANO')
+    )
+
+    if df_base_contexto.empty:
+        return pd.DataFrame(columns=['ANO', *FAIXAS])
+
+    linha_base = df_base_contexto.iloc[-1].copy()
+
+    for ano in sorted(df_base['ANO'].unique()):
+        linha_temp = linha_base.copy()
         linha_temp['ANO'] = ano
 
         probs = modelo.predict_proba(build_X(linha_temp))[0]
 
+        linha_resultado = {'ANO': ano}
         for faixa, p in zip(FAIXAS, probs):
-            resultados.append({
-                'ANO': ano,
-                'FAIXA': faixa,
-                'PROB': p})
+            linha_resultado[faixa] = p
+
+        resultados.append(linha_resultado)
 
     return pd.DataFrame(resultados)
 
@@ -431,26 +444,8 @@ with tab2:
     #     df_municipio = df_curso[df_curso['MUNICIPIO'] == municipio_sel]
 
     # ==========================================================
-    # LINHA REPRESENTATIVA (COERENTE COM O DATASET AGREGADO)
+    # LINHA REPRESENTATIVA (MESMA BASE DA TABELA)
     # ==========================================================
-
-    df_base_modelo = (
-        df_matricula[
-            (df_matricula['UNIDADE'] == unidade_sel) &
-            ((curso_sel == 'GLOBAL') | (df_matricula['CURSO'] == curso_sel))
-        ]
-        .groupby(['ANO', 'UNIDADE', 'CURSO'], as_index=False)
-        .agg(
-            QTD_CONC=('QTD_CONC', 'max'),
-            QTD_EMPRESAS=('QTD_EMPRESAS', 'max'),
-            SALARIO_MEDIO=('SALARIO_MEDIO', 'mean'),
-            SALDO_EMPREGO=('SALDO_EMPREGO', 'sum'),
-            MAT_PAG=('MAT_PAG', 'sum')
-        )
-        .sort_values('ANO')
-    )
-    # Usa o último ano como cenário real
-    linha_real = df_base_modelo.iloc[-1].copy()
 
     if curso_sel == 'GLOBAL':
         linha_real = (
