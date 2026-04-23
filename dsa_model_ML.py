@@ -36,7 +36,7 @@ labels_exibicao = {
     'QTD_CONC': 'CONCORRÊNCIA (INEP)',
     # 'QTD_MAT_CONC': 'MATRÍCULA CONC. (INEP)',
     'QTD_EMPRESAS': 'EMPRESAS (RAIS)',
-    'QTD_VINCULOS': 'VÍNCULOS (RAIS)',
+    # 'QTD_VINCULOS': 'VÍNCULOS (RAIS)',
     'SALARIO_MEDIO': 'SALÁRIO MÉDIO (RAIS)',
     'SALDO_EMPREGO': 'SALDO EMPREGO (CAGED)'
 }
@@ -165,7 +165,6 @@ def grafico_real_barras_horizontais(probs_atual, ano_atual):
     }
 
     fig = go.Figure()
-
     fig.add_trace(
         go.Bar(
             x=df_bar["Probabilidade"],
@@ -492,8 +491,11 @@ with tab2:
                 'ANO','MUNICIPIO','CURSO',
                 'QTD_CONC',
                 # 'QTD_MAT_CONC',
-                'QTD_EMPRESAS','QTD_VINCULOS',
-                'SALARIO_MEDIO','SALDO_EMPREGO','MAT_PAG'
+                'QTD_EMPRESAS',
+                # 'QTD_VINCULOS',
+                'SALARIO_MEDIO',
+                'SALDO_EMPREGO',
+                'MAT_PAG'
             ]
         ].sort_values('ANO')
 
@@ -516,23 +518,24 @@ with tab2:
         st.subheader("🧪 Cenário SIMULADO")
         st.markdown("##### Parâmetros do cenário projetado")
 
-        c1, c2, c3 = st.columns(3)
+        # c1, c2, c3 = st.columns(3)
+        c1, c2 = st.columns(2)
 
         with c1:
             conc_sim = st.number_input(labels_exibicao['QTD_CONC'], value=int(linha_real['QTD_CONC']))
             emp_sim = st.number_input(labels_exibicao['QTD_EMPRESAS'], value=int(linha_real['QTD_EMPRESAS']))
 
-        with c2:
+        # with c2:
             # matc_sim = st.number_input(labels_exibicao['QTD_MAT_CONC'], value=int(linha_real['QTD_MAT_CONC']))
-            vinc_sim = st.number_input(labels_exibicao['QTD_VINCULOS'], value=int(linha_real['QTD_VINCULOS']))
+            # vinc_sim = st.number_input(labels_exibicao['QTD_VINCULOS'], value=int(linha_real['QTD_VINCULOS']))
 
-        with c3:
+        with c2:
             sal_sim = st.number_input(labels_exibicao['SALARIO_MEDIO'], value=float(linha_real['SALARIO_MEDIO']))
             saldo_sim = st.number_input(labels_exibicao['SALDO_EMPREGO'], value=int(linha_real['SALDO_EMPREGO']))
 
         linha_sim = linha_real.copy()
         # linha_sim[numericas_ohencoder] = [emp_sim, vinc_sim, conc_sim, matc_sim, sal_sim, saldo_sim]
-        linha_sim[numericas_ohencoder] = [emp_sim, vinc_sim, conc_sim, sal_sim, saldo_sim]
+        linha_sim[numericas_ohencoder] = [emp_sim, conc_sim, sal_sim, saldo_sim]
 
         probs_sim = modelo.predict_proba(build_X(linha_sim))[0]
 
