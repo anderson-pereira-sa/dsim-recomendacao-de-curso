@@ -739,4 +739,3 @@ join_CHP_itinerario_2025_6_caged[cols_num] = (join_CHP_itinerario_2025_6_caged[c
 
 join_CHP_itinerario_2025_6_caged.to_pickle(r"C:\Users\anderson.pereira\OneDrive - Sistema FIEB\Inteligência de Mercado\Data Science\DeploymentML\dsim-recomendacao-de-curso\dataset.pkl")
 print("Dataset final processado e salvo como dataset.pkl")
-

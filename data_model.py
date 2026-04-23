@@ -28,7 +28,6 @@ X_ohencoder = dataset_0[categoricas_ohencoder + numericas_ohencoder]
 le = LabelEncoder()
 dataset_0['FAIXA_MAT_ENC'] = le.fit_transform(dataset_0['FAIXA_MAT'])
 y_ohencoder = dataset_0['FAIXA_MAT_ENC']
-# y_ohencoder = dataset_0['FAIXA_MAT']
 encoder = OneHotEncoder(drop='first',
                         sparse_output=False,
                         handle_unknown='ignore')

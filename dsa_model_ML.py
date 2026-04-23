@@ -480,20 +480,13 @@ with tab2:
 
         df_contexto_historico = df_matricula[
             (df_matricula['UNIDADE'] == unidade_sel) &
-            ((curso_sel == 'GLOBAL') | (df_matricula['CURSO'] == curso_sel)) #&
-            # ((municipio_sel == 'GLOBAL') | (df_matricula['MUNICIPIO'] == municipio_sel))
-        ][
-            [
-                'ANO', 'CURSO',
-                'QTD_CONC',
-                # 'QTD_MAT_CONC',
-                'QTD_EMPRESAS',
-                # 'QTD_VINCULOS',
-                'SALARIO_MEDIO',
-                'SALDO_EMPREGO',
-                'MAT_PAG'
-            ]
-        ].sort_values('ANO')
+            ((curso_sel == 'GLOBAL') | (df_matricula['CURSO'] == curso_sel))
+            ].groupby(['ANO', 'CURSO'], 
+                      as_index=False).agg(QTD_CONC=('QTD_CONC', 'max'),
+                                          QTD_EMPRESAS=('QTD_EMPRESAS', 'max'),
+                                          SALARIO_MEDIO=('SALARIO_MEDIO', 'mean'),
+                                          SALDO_EMPREGO=('SALDO_EMPREGO', 'sum'),
+                                          MAT_PAG=('MAT_PAG', 'sum')).sort_values('ANO')
 
         df_contexto_historico = df_contexto_historico.rename(columns=labels_exibicao)
 
