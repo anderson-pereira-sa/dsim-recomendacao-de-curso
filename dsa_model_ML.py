@@ -604,7 +604,11 @@ with tab2:
         faixa_nome = FAIXAS[faixa_idx]
 
         impactos = impacto_variaveis_locais(linha_real, linha_sim, faixa_idx)
-        texto_exec = texto_executivo_dinamico(faixa_nome, impactos)
+        texto_exec, _ = analise_executiva_prob_real(
+            faixa_dominante=faixa_nome,
+            prob_dominante=float(np.max(probs_sim)),
+            impactos_dict=impactos
+        )
 
         st.plotly_chart(pizza_sim(probs_sim, "Distribuição SIMULADA"), True)
 
