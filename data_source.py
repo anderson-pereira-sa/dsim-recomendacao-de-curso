@@ -663,6 +663,88 @@ itinerario['Nome do Item'] = itinerario['Nome do Item'].replace({'TÉCNICO EM ':
 itinerario_1 = itinerario[itinerario['MODALIDADE'] == 'CHP'].drop_duplicates().reset_index(drop=True)
 
 
+
+####################################################################################################
+# >>>>>>> - FONTE CATÁLOGO NACIONAL DE CURSOS TÉCNICOS (CNCT) - <<<<<<< #
+flle_cnct = r"C:\Users\anderson.pereira\OneDrive - Sistema FIEB\Inteligência de Mercado\Data Science\DeploymentML\dsim-recomendacao-de-curso\catalogo_cnct.xlsx"
+df_catalogo_cnct  = pd.read_excel(flle_cnct, sheet_name='catalogo_cnct')
+df_catalogo_cnct.drop(columns=['Eixo Tecnológico','Área Tecnológica','Perfil Profissional de Conclusão','Carga Horária Mínima',
+                               'Pré-Requisitos para Ingresso','Descrição Carga Horária Mínima','Campo de Atuação'], inplace=True, errors='ignore')
+df_catalogo_cnct['Denominação do Curso'] = df_catalogo_cnct['Denominação do Curso'].str.upper()
+df_catalogo_cnct['Denominação do Curso'] = df_catalogo_cnct['Denominação do Curso'].replace({'TÉCNICO EM ':'','TECNÓLOGO EM ':''}, regex=True)
+
+df_catalogo_cnct_cbo = df_catalogo_cnct[['Denominação do Curso', 'Ocupações CBO Associadas']].drop_duplicates().dropna().reset_index(drop=True)
+df_catalogo_cnct_itinerario = df_catalogo_cnct[['Denominação do Curso', 'Itinerários Formativos']].drop_duplicates().dropna().reset_index(drop=True)
+
+colunas_multilinha_cbo = ['Ocupações CBO Associadas']
+colunas_multilinha_itinerario = ['Itinerários Formativos']
+
+def explode_multiplas_colunas(linha, colunas):
+    listas = {col: str(linha[col]).split('\n') if pd.notna(linha[col]) else [''] for col in colunas}
+    max_len = max(len(v) for v in listas.values())
+    for col, lista in listas.items():
+        if len(lista) < max_len:
+            listas[col] = lista + [''] * (max_len - len(lista))
+    df_expandido = pd.DataFrame(listas)
+    for col in linha.index:
+        if col not in colunas:
+            df_expandido[col] = linha[col]  
+    return df_expandido
+
+df_catalogo_cnct_cbo = pd.concat(df_catalogo_cnct_cbo.apply(explode_multiplas_colunas,
+                                                    axis=1, colunas=colunas_multilinha_cbo).to_list(),
+                                                    ignore_index=True)
+df_catalogo_cnct_cbo = df_catalogo_cnct_cbo[df_catalogo_cnct_cbo['Ocupações CBO Associadas'].astype(str).str.strip().ne('') & 
+                                            df_catalogo_cnct_cbo['Ocupações CBO Associadas'].notna() & 
+                                            ~df_catalogo_cnct_cbo['Ocupações CBO Associadas'].str.contains('Ocupação ainda não classificada', case=False, na=False)].reset_index(drop=True)
+
+df_catalogo_cnct_cbo['CBO'] = (
+    df_catalogo_cnct_cbo['Ocupações CBO Associadas']
+        .astype(str)
+        .str.extract(r'(\d{4}\s*-\s*\d{2}|\d{6}|\d{4})')[0]
+        .str.replace(r'\D', '', regex=True)
+)
+
+df_catalogo_cnct_itinerario = pd.concat(df_catalogo_cnct_itinerario.apply(explode_multiplas_colunas,
+                                                    axis=1, colunas=colunas_multilinha_itinerario).to_list(),
+                                                    ignore_index=True)
+
+df_catalogo_cnct_itinerario['Itinerários Formativos'] = np.where(df_catalogo_cnct_itinerario['Itinerários Formativos'].str.contains('Curso Superior de Tecnologia em Agroecologia', case=False, na=False),'Curso Superior de Tecnologia em Agroecologia',
+                                                                 np.where(df_catalogo_cnct_itinerario['Itinerários Formativos'].str.contains('Bacharealdo em Negócios da Moda', case=False, na=False), 'Bacharelado em Negócios da Moda',
+                                                                          df_catalogo_cnct_itinerario['Itinerários Formativos']))
+
+df_catalogo_cnct_itinerario['MODALIDADE'] = np.where(df_catalogo_cnct_itinerario['Itinerários Formativos'].str.contains('Especialização Técnica em ', case=False, na=False), 'POSTEC',
+                                                 np.where(df_catalogo_cnct_itinerario['Itinerários Formativos'
+                                                                                      ].str.contains('Bacharelado |Bacharel |Licenciatura |Curso Superior de Tecnologia |Graduação |Bacharelado/Licenciatura ', 
+                                                                                                                             case=False, na=False), 'GRAD', 'FIC'))
+
+df_catalogo_cnct_itinerario = df_catalogo_cnct_itinerario[~df_catalogo_cnct_itinerario['Itinerários Formativos'].str.contains('Sugestões de |Não identificadas|Não há|O curso não prevê|:', case=False, na=False)].reset_index(drop=True)
+df_catalogo_cnct_itinerario = df_catalogo_cnct_itinerario[df_catalogo_cnct_itinerario['Itinerários Formativos'].astype(str).str.strip().ne('') 
+                                                          & df_catalogo_cnct_itinerario['Itinerários Formativos'].notna()].reset_index(drop=True)
+
+for col in colunas_multilinha_cbo:
+    df_catalogo_cnct_cbo[col] = df_catalogo_cnct_cbo[col].str.strip()
+
+for col in colunas_multilinha_itinerario:
+    df_catalogo_cnct_itinerario[col] = df_catalogo_cnct_itinerario[col].str.strip()
+
+df_catalogo_cnct_1 = df_catalogo_cnct[['Denominação do Curso']].merge(df_catalogo_cnct_cbo, on='Denominação do Curso', how='left'
+                                                                      ).merge(df_catalogo_cnct_itinerario, on='Denominação do Curso', how='left')
+
+df_catalogo_cnct_1_tec = df_catalogo_cnct_1[['CBO', 'Denominação do Curso']].copy(deep=True)
+df_catalogo_cnct_1_tec.loc[:, 'MODALIDADE'] = 'CHP'
+df_catalogo_cnct_1_tec.rename(columns={'Denominação do Curso':'CURSO'}, inplace=True)
+
+df_catalogo_cnct_1_outros = df_catalogo_cnct_1[['CBO','Itinerários Formativos','MODALIDADE']].copy(deep=True)
+df_catalogo_cnct_1_outros.rename(columns={'Itinerários Formativos':'CURSO'}, inplace=True)
+df_catalogo_cnct_1_outros = df_catalogo_cnct_1_outros[df_catalogo_cnct_1_outros['CURSO'].notna()].reset_index(drop=True)
+
+df_catalogo_cnct_2 = pd.concat([df_catalogo_cnct_1_tec, df_catalogo_cnct_1_outros],axis=0,ignore_index=True)
+df_catalogo_cnct_2 = df_catalogo_cnct_2[df_catalogo_cnct_2['CBO'].notna()].reset_index(drop=True)
+df_catalogo_cnct_2.drop_duplicates(inplace=True)
+df_catalogo_cnct_2=df_catalogo_cnct_2[df_catalogo_cnct_2['MODALIDADE'] == 'CHP'].reset_index(drop=True)
+df_catalogo_cnct_2.head(5)
+
 ##################################################+ # + # + # + # + # + # + # + # + # + # + # + # + #
 ##### >>>>>>> ETL <<<<<<< #####
 ##################################################
@@ -679,13 +761,13 @@ df_CHP_Pagante_igual_2= df_CHP_Pagante_igual_2.merge(df_rais_ESTAB_2[['ANO','UNI
 
 df_CHP_Pagante_igual_2 = df_CHP_Pagante_igual_2.rename(columns={'MATRICULAS':'MAT_PAG'})
 
-# >>>>>>> - ITINERÁRIO - <<<<<<< #
-join_CHP_itinerario_2025_1 = df_CHP_Pagante_igual_2.merge(itinerario_1[['Nome do Item','CBO']], 
+# >>>>>>> - ITINERÁRIO / CNCT - <<<<<<< #
+join_CHP_itinerario_2025_1 = df_CHP_Pagante_igual_2.merge(df_catalogo_cnct_2[['CURSO','CBO']], 
                                                           how='left',
                                                           left_on='CURSO', 
-                                                          right_on='Nome do Item')
+                                                          right_on='CURSO')
 
-join_CHP_itinerario_2025_1.drop(columns='Nome do Item', inplace=True)
+# join_CHP_itinerario_2025_1.drop(columns='Nome do Item', inplace=True)
 join_CHP_itinerario_2025_1['CBO_familia'] = join_CHP_itinerario_2025_1['CBO'].str.split('-').str[0]
 join_CHP_itinerario_2025_1['CBO'] = join_CHP_itinerario_2025_1['CBO'].str.replace('-','',regex=False)
 join_CHP_itinerario_2025_1['CBO_UNIDADE'] = join_CHP_itinerario_2025_1['CBO'] + join_CHP_itinerario_2025_1['UNIDADE']
