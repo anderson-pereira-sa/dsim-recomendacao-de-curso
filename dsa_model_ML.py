@@ -475,6 +475,17 @@ with tab2:
     # ---------- PROBABILIDADE REAL ----------
     probs_real = modelo.predict_proba(build_X(linha_real))[0]
 
+    # ---------- IMPACTOS NO CENÁRIO REAL ----------
+    faixa_idx_real = int(np.argmax(probs_real))
+
+    # Para o cenário real, usamos linha_real como baseline
+    impactos_real = impacto_variaveis_locais(
+        linha_real=linha_real,
+        linha_sim=linha_real, 
+        faixa_idx=faixa_idx_real
+    )
+
+
     # ==========================================================
     # LAYOUT: REAL | DIVISOR | SIMULADO
     # ==========================================================
@@ -502,11 +513,10 @@ with tab2:
             faixa_dominante = FAIXAS[int(np.argmax(probs_real))]
             prob_dominante = float(np.max(probs_real))
             
-            impactos = impacto_variaveis_locais(linha_real, linha_real, int(np.argmax(probs_real)))
             texto_prob_real, tipo_prob_real = analise_executiva_prob_real(
                 faixa_dominante=faixa_dominante,
                 prob_dominante=prob_dominante,
-                impactos_dict=impactos  # ← saída de impacto_variaveis_locais
+                impactos_dict=impactos_real
             )
 
             if tipo_prob_real == "warning":
