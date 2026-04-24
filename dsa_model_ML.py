@@ -38,7 +38,8 @@ labels_exibicao = {
     'QTD_EMPRESAS': 'EMPRESAS (RAIS)',
     # 'QTD_VINCULOS': 'VÍNCULOS (RAIS)',
     'SALARIO_MEDIO': 'SALÁRIO MÉDIO (CAGED)',
-    'SALDO_EMPREGO': 'SALDO EMPREGO (CAGED)'
+    'SALDO_EMPREGO': 'SALDO EMPREGO (CAGED)',
+    'MAT_PAG': 'MATRÍCULA (SENAI)'
 }
 
 # ==========================================================
