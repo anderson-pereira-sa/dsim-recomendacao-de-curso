@@ -33,7 +33,7 @@ df_matricula = load_data()
 # ==========================================================
 
 labels_exibicao = {
-    'QTD_CONC': 'CONCORRÊNCIA (INEP)',
+    'QTD_CONC': 'CONCORRÊNCIA)',
     # 'QTD_MAT_CONC': 'MATRÍCULA CONC. (INEP)',
     'QTD_EMPRESAS': 'EMPRESAS (RAIS)',
     # 'QTD_VINCULOS': 'VÍNCULOS (RAIS)',
@@ -278,38 +278,94 @@ def grafico_real_linhas(df_series):
 
     return fig
 
-def analise_executiva_prob_real(faixa_dominante, prob_dominante):
-    idx = FAIXAS.index(faixa_dominante)
+def analise_executiva_prob_real(
+    faixa_dominante,
+    prob_dominante,
+    impactos_dict,
+    limite_otimo=0.80,
+    limite_relevante_pp=1.0
+):
+
+    # Ordena impactos por magnitude
+    impactos_ord = (
+        pd.Series(impactos_dict)
+        .sort_values(key=abs, ascending=False)
+    )
+
+    # Variáveis com impacto negativo relevante
+    impactos_negativos = impactos_ord[
+        impactos_ord < -limite_relevante_pp / 100
+    ]
+
+    # =========================
+    # CENÁRIO RUIM (≤20)
+    # =========================
     if faixa_dominante == "Abaixo ou igual a 20":
         texto = (
-            "No cenário atual, a maior probabilidade está concentrada na faixa "
-            "**abaixo ou igual a 20 matrículas**. "
-            "Esse resultado indica **risco elevado de baixa demanda**. "
-            "Recomenda-se utilizar o **simulador** para avaliar impactos de melhorias "
-            "em variáveis estruturais, como empresas, vínculos e salário médio, "
-            "buscando deslocar o cenário para faixas superiores."
+            "O cenário atual apresenta **alto risco de baixa demanda**, com maior "
+            "probabilidade concentrada na faixa **abaixo ou igual a 20 matrículas**. "
+            "Esse resultado indica necessidade de **intervenção estratégica**. "
+            "Recomenda-se utilizar o **simulador** para avaliar melhorias em variáveis "
+            "estruturais e de mercado, buscando deslocar o cenário para faixas superiores."
         )
         tipo = "warning"
+        return texto, tipo
 
-    elif faixa_dominante == "Entre 21 e 40":
+    # =========================
+    # CENÁRIO INTERMEDIÁRIO (21–40)
+    # =========================
+    if faixa_dominante == "Entre 21 e 40":
         texto = (
-            "O cenário atual indica maior concentração de probabilidade na faixa "
-            "**entre 21 e 40 matrículas**. "
-            "Trata-se de um **cenário intermediário**, com potencial de crescimento. "
-            "Ajustes táticos no mercado local e na atratividade do curso "
-            "podem contribuir para evolução para a faixa superior."
+            "O cenário atual indica uma **situação intermediária de demanda**, com maior "
+            "probabilidade concentrada na faixa **entre 21 e 40 matrículas**. "
+            "Há **potencial de crescimento**, e ajustes táticos no mercado local, "
+            "na atratividade do curso ou na oferta institucional podem contribuir "
+            "para evolução para a faixa superior."
         )
         tipo = "info"
+        return texto, tipo
 
-    else:  # "Acima ou igual a 41"
-        texto = (
-            "A maior probabilidade está concentrada na faixa "
-            "**acima de 41 matrículas**, indicando um **cenário favorável de demanda**. "
-            "A recomendação é **manter a estratégia atual** e avaliar oportunidades "
-            "de expansão ou consolidação da oferta."
-        )
+    # =========================
+    # CENÁRIO ÓTIMO (≥41)
+    # =========================
+    if faixa_dominante == "Acima ou igual a 41" and prob_dominante >= limite_otimo:
+
+        if not impactos_negativos.empty:
+            # Lista das principais variáveis de risco
+            vars_risco = [
+                f"{labels_exibicao.get(v, v)}"
+                for v in impactos_negativos.index[:2]
+            ]
+
+            texto = (
+                "Estamos em um **cenário excelente de demanda**, com probabilidade "
+                "elevada de permanência na faixa **acima ou igual a 41 matrículas**. "
+                "No entanto, o modelo indica que **movimentos adicionais no mercado de trabalho**, "
+                f"especialmente relacionados a **{', '.join(vars_risco)}**, "
+                "podem **deslocar parte da demanda para o emprego direto**, "
+                "reduzindo marginalmente a probabilidade de matrícula muito elevada. "
+                "A recomendação é **manter a estratégia atual** e **monitorar o mercado**."
+            )
+        else:
+            texto = (
+                "O cenário atual é **altamente favorável**, com elevada probabilidade "
+                "de permanência na faixa **acima ou igual a 41 matrículas**. "
+                "Não há sinais relevantes de risco no curto prazo. "
+                "A recomendação é **manter a estratégia vigente** e acompanhar a evolução "
+                "dos indicadores de mercado."
+            )
+
         tipo = "success"
+        return texto, tipo
 
+    # =========================
+    # FALLBACK (segurança)
+    # =========================
+    texto = (
+        "O cenário atual apresenta distribuição equilibrada das probabilidades. "
+        "Recomenda-se análise complementar por meio do simulador."
+    )
+    tipo = "info"
     return texto, tipo
 
 
@@ -445,10 +501,13 @@ with tab2:
             st.markdown("#### ✦ Probabilidade REAL")
             faixa_dominante = FAIXAS[int(np.argmax(probs_real))]
             prob_dominante = float(np.max(probs_real))
-
+            
+            impactos = impacto_variaveis_locais(linha_real, linha_real, int(np.argmax(probs_real)))
             texto_prob_real, tipo_prob_real = analise_executiva_prob_real(
-                faixa_dominante,
-                prob_dominante)
+                faixa_dominante=faixa_dominante,
+                prob_dominante=prob_dominante,
+                impactos_dict=impactos  # ← saída de impacto_variaveis_locais
+            )
 
             if tipo_prob_real == "warning":
                 st.warning(texto_prob_real)

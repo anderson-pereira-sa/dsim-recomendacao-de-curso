@@ -738,4 +738,5 @@ cols_num = join_CHP_itinerario_2025_6_caged.select_dtypes(include='number').colu
 join_CHP_itinerario_2025_6_caged[cols_num] = (join_CHP_itinerario_2025_6_caged[cols_num].fillna(0))
 
 join_CHP_itinerario_2025_6_caged.to_pickle(r"C:\Users\anderson.pereira\OneDrive - Sistema FIEB\Inteligência de Mercado\Data Science\DeploymentML\dsim-recomendacao-de-curso\dataset.pkl")
+# print(join_CHP_itinerario_2025_6_caged.head(5))
 print("Dataset final processado e salvo como dataset.pkl")

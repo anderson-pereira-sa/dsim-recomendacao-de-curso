@@ -19,7 +19,7 @@ numericas_ohencoder = [
     'QTD_CONC',
     'SALARIO_MEDIO',
     'SALDO_EMPREGO'
-]
+    ]
 
 X_ohencoder = dataset_0[categoricas_ohencoder + numericas_ohencoder]
 
