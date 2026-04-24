@@ -227,10 +227,9 @@ def probabilidades_por_ano(df_base, unidade, curso):
             QTD_EMPRESAS=('QTD_EMPRESAS', 'max'),
             SALARIO_MEDIO=('SALARIO_MEDIO', 'mean'),
             SALDO_EMPREGO=('SALDO_EMPREGO', 'sum'),
-            MAT_PAG=('MAT_PAG', 'sum')
-        )
-        .sort_values('ANO')
-        )
+            MAT_PAG=('MAT_PAG', 'sum')).sort_values('ANO'))
+    
+    df_base_contexto['SALARIO_MEDIO'] = np.round(df_base_contexto['SALARIO_MEDIO'], 2)
 
     # ✅ TRATAMENTO DE BORDA (caso não haja dados)
     if df_base_contexto.empty:
