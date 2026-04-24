@@ -39,7 +39,8 @@ labels_exibicao = {
     # 'QTD_VINCULOS': 'VÍNCULOS (RAIS)',
     'SALARIO_MEDIO': 'SALÁRIO MÉDIO (CAGED)',
     'SALDO_EMPREGO': 'SALDO EMPREGO (CAGED)',
-    'MAT_PAG': 'MATRÍCULA (SENAI)'
+    'MAT_PAG': 'MATRÍCULA (SENAI)',
+    'FAIXA_MAT': 'FAIXA DE MATRÍCULA (SENAI)'
 }
 
 # ==========================================================
@@ -229,11 +230,7 @@ def probabilidades_por_ano(df_base, unidade, curso):
             SALDO_EMPREGO=('SALDO_EMPREGO', 'sum'),
             MAT_PAG=('MAT_PAG', 'sum')).sort_values('ANO'))
     
-    df_base_contexto['SALARIO_MEDIO'] = round(df_base_contexto['SALARIO_MEDIO'], 2)
-
-    # ✅ TRATAMENTO DE BORDA (caso não haja dados)
     if df_base_contexto.empty:
-        # Retorna DataFrame vazio, mas com colunas corretas
         return pd.DataFrame(columns=['ANO', *FAIXAS])
 
     # Linha base estrutural (último ano disponível)
@@ -293,9 +290,6 @@ def grafico_real_linhas(df_series):
 
 def analise_executiva_prob_real(faixa_dominante, prob_dominante):
     idx = FAIXAS.index(faixa_dominante)
-
-    # Mapeamento SEMÂNTICO por índice
-    # Ajuste conforme a ordem real do seu LabelEncoder
     if faixa_dominante == "Abaixo ou igual a 20":
         texto = (
             "No cenário atual, a maior probabilidade está concentrada na faixa "
@@ -496,7 +490,8 @@ with tab2:
             ]
             .sort_values('ANO')
         )
-
+        df_contexto_historico['SALARIO_MEDIO'] = round(df_contexto_historico['SALARIO_MEDIO'], 2)
+        df_contexto_historico = df_contexto_historico[[ 'ANO', 'UNIDADE', 'CURSO', 'FAIXA_MAT', 'MAT_PAG', 'QTD_CONC', 'QTD_EMPRESAS', 'SALDO_EMPREGO','SALARIO_MEDIO' ]]
         df_contexto_historico = df_contexto_historico.rename(columns=labels_exibicao)
 
         st.dataframe(
