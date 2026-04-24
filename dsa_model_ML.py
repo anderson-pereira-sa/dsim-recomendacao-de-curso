@@ -39,8 +39,8 @@ labels_exibicao = {
     # 'QTD_VINCULOS': 'VÍNCULOS (RAIS)',
     'SALARIO_MEDIO': 'SALÁRIO MÉDIO (CAGED)',
     'SALDO_EMPREGO': 'SALDO EMPREGO (CAGED)',
-    'MAT_PAG': 'MATRÍCULA (SENAI)',
-    'FAIXA_MAT': 'FAIXA DE MATRÍCULA (SENAI)'
+    'MAT_PAG': 'MATR.(SENAI)',
+    'FAIXA_MAT': 'FAIXA DE MATR. (SENAI)'
 }
 
 # ==========================================================
@@ -88,7 +88,6 @@ def build_X(row):
     X_num = row[numericas_ohencoder].astype(float).values.reshape(1, -1)
 
     return np.hstack([X_num, X_cat]).astype(float)
-
 
 
 def impacto_variaveis_locais(linha_real, linha_sim, faixa_idx, delta_padrao=0.10, epsilon=1.0):
@@ -197,9 +196,7 @@ def grafico_real_barras_horizontais(probs_atual, ano_atual):
             textfont=dict(
                 size=18        # ✅ AQUI você controla o tamanho
                 # color="black"   # ✅ Garante contraste executivo
-            )
-        )
-    )
+            )))
 
     fig.update_layout(
         title=f"Distribuição das Probabilidades – {ano_atual}",
@@ -208,20 +205,15 @@ def grafico_real_barras_horizontais(probs_atual, ano_atual):
         xaxis_tickformat=".0%",
         template="plotly_white",
         height=350,
-        margin=dict(l=140, r=40, t=60, b=40)
-    )
-
+        margin=dict(l=140, r=40, t=60, b=40))
     return fig
 
 def probabilidades_por_ano(df_base, unidade, curso):
     resultados = []
-
-    # Filtra o contexto estrutural
     df_base_contexto = (
         df_base[
             (df_base['UNIDADE'] == unidade) &
-            ((curso == 'GLOBAL') | (df_base['CURSO'] == curso))
-        ]
+            ((curso == 'GLOBAL') | (df_base['CURSO'] == curso))]
         .groupby(['ANO', 'UNIDADE', 'CURSO'], as_index=False)
         .agg(
             QTD_CONC=('QTD_CONC', 'max'),
@@ -233,10 +225,8 @@ def probabilidades_por_ano(df_base, unidade, curso):
     if df_base_contexto.empty:
         return pd.DataFrame(columns=['ANO', *FAIXAS])
 
-    # Linha base estrutural (último ano disponível)
     linha_base = df_base_contexto.iloc[-1].copy(deep=True)
 
-    # Calcula probabilidades variando SOMENTE o ano
     for ano in sorted(df_base['ANO'].unique()):
         linha_temp = linha_base.copy(deep=True)
         linha_temp['ANO'] = ano

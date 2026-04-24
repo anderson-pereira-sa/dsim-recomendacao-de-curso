@@ -728,7 +728,7 @@ join_CHP_itinerario_2025_6_caged = join_CHP_itinerario_2025_5_caged.copy(deep=Tr
 # join_CHP_itinerario_2025_6_caged['PRESSAO_SALARIAL'] = join_CHP_itinerario_2025_6_caged['PRESSAO_SALARIAL'].fillna(0).astype(float)
 join_CHP_itinerario_2025_6_caged = join_CHP_itinerario_2025_6_caged[(join_CHP_itinerario_2025_6_caged['SALDO_EMPREGO'].notnull())].reset_index(drop=True)
 
-labels_faixas = ['≤20', '21–40', '>41']
+labels_faixas = ['Abaixo ou igual a 20', 'Entre 21 e 40', 'Acima ou igual a 41']
 join_CHP_itinerario_2025_6_caged['FAIXA_MAT'] = pd.cut(join_CHP_itinerario_2025_6_caged['MAT_PAG'],
                                                        bins=[-np.inf, 20, 40, np.inf],
                                                        labels=labels_faixas,
