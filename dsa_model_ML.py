@@ -514,7 +514,7 @@ with tab2:
         df_contexto_historico = (
             df_matricula[
                 (df_matricula['UNIDADE'] == unidade_sel) &
-                (df_matricula['ANO'].isin(ano_sel)) &
+                (df_matricula['ANO'] == ano_sel) &
                 ((curso_sel == 'GLOBAL') | (df_matricula['CURSO'] == curso_sel))
             ]
             .sort_values('ANO')
