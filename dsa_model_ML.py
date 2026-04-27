@@ -407,7 +407,8 @@ with tab2:
     opcoes_ano = ['TODOS'] + anos_disponiveis
 
     ano_sel = st.sidebar.selectbox(
-        "ANO (apenas para o Contexto Histórico)",
+        "ANO "
+        "(Apenas para o Contexto Histórico)",
         opcoes_ano,
         index=0)
 
