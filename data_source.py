@@ -66,8 +66,7 @@ WITH rais_vinc AS
 (
 SELECT 
       COUNT(*) AS QTD_VINCULOS
-      -- ,AVG(vinc_rais.VL_REMUNERACAO_DEZEMBRO_NOMINAL) as SALARIO
-      ,AVG(vinc_rais.VL_REMUNERACAO_MEDIA_NOMINAL) as SALARIO
+      ,SUM(vinc_rais.VL_REMUNERACAO_MEDIA_NOMINAL) as SALARIO
       ,CASE WHEN dim_terri.NO_MUNICIPIO = 'CAMACARI' THEN 'CAMAÇARI'
               WHEN dim_terri.NO_MUNICIPIO = 'EUNAPOLIS' THEN 'EUNÁPOLIS'
               WHEN dim_terri.NO_MUNICIPIO = 'ILHEUS' THEN 'ILHÉUS'
@@ -90,24 +89,18 @@ SELECT
 
 FROM DB_OBSERVATORIO.rais.vinculos_bahia_historico vinc_rais
 LEFT JOIN DB_OBSERVATORIO.referencia.dimensao_territorio_territorio_identidade dim_terri ON vinc_rais.CO_MUN_IBGE_6 = dim_terri.CO_MUN_IBGE_6
-WHERE 
- --Ano = (SELECT MAX(Ano) FROM DB_OBSERVATORIO.rais.vinculos_bahia_historico)
-   Ano IN (2022, 2023, 2024)
-GROUP BY -- vinc_rais.Qtd_Vinculos_Ativos
-         dim_terri.NO_MUNICIPIO
-        -- ,vinc_rais.VL_REMUNERACAO_DEZEMBRO_NOMINAL
-         ,vinc_rais.Ano, vinc_rais.CO_CBO
+WHERE Ano IN (2022, 2023, 2024)
+GROUP BY dim_terri.NO_MUNICIPIO ,vinc_rais.Ano, vinc_rais.CO_CBO
 )
 SELECT 
       SUM(QTD_VINCULOS) AS QTD_VINCULOS
-      ,AVG(SALARIO) AS SALARIO_MEDIO
+      ,SUM(SALARIO) / NULLIF(SUM(QTD_VINCULOS),0) AS SALARIO_MEDIO
       ,NO_MUNICIPIO
       ,CO_CBO
       ,ANO
 FROM rais_vinc
 GROUP BY NO_MUNICIPIO, CO_CBO, ANO
-ORDER BY NO_MUNICIPIO DESC
-;
+ORDER BY NO_MUNICIPIO DESC;
 ''')
 
 df_rais_VINC['NO_MUNICIPIO_COD'] = limpar_texto(df_rais_VINC['NO_MUNICIPIO'])
@@ -147,9 +140,7 @@ SELECT
       END AS ANO
 FROM DB_OBSERVATORIO.rais.estabelecimentos_bahia_historico est_rais
 LEFT JOIN DB_OBSERVATORIO.referencia.dimensao_territorio_territorio_identidade dim_terri ON est_rais.COD_MUN = dim_terri.CO_MUN_IBGE_6
-WHERE 
-  -- Ano = (SELECT MAX(Ano) FROM DB_OBSERVATORIO.rais.estabelecimentos_bahia_historico)
-  Ano IN (2022, 2023, 2024)
+WHERE Ano IN (2022, 2023, 2024)
 
 GROUP BY -- est_rais.Qtd_Vinculos_Ativos
          dim_terri.NO_MUNICIPIO
@@ -184,11 +175,12 @@ SELECT DISTINCT
       ,municipio
       ,cbo2002_ocupacao as CO_CBO
       ,SUBSTRING(CAST(cbo2002_ocupacao AS VARCHAR(10)), 1, 4) AS CO_CBO_FAMILIA
-      ,CASE WHEN desligados > 0 THEN salario ELSE 0 END AS SALARIO_DESLIGADOS
-      ,CASE WHEN admitidos > 0 THEN salario ELSE 0 END AS SALARIO_ADMITIDOS
-      ,salario
-      ,admitidos
-      ,desligados
+      ,SUM(CASE WHEN desligados > 0 THEN salario ELSE 0 END) AS SALARIO_DESLIGADOS
+      ,SUM(CASE WHEN admitidos > 0 THEN salario ELSE 0 END) AS SALARIO_ADMITIDOS
+      ,AVG(salario) AS SALARIO_MEDIO
+      ,SUM(admitidos) AS SUM_ADMITIDOS
+      ,SUM(desligados) AS SUM_DESLIGADOS
+
 FROM DB_OBSERVATORIO.caged.caged_bahia
 
 WHERE YEAR(Data) IN (2023, 2024, 2025)
@@ -197,6 +189,7 @@ WHERE YEAR(Data) IN (2023, 2024, 2025)
     -- AND indicador_aprendiz <> '1' -- Exclui aprendizes: SIM
     -- AND tam_estab_jan <> 98 -- Inválido
     -- AND tipo_movimentacao <> 60 -- Desligamento por morte 
+GROUP BY YEAR(Data), municipio, cbo2002_ocupacao
 )
 
 SELECT caged_final.ANO, 
@@ -217,21 +210,14 @@ SELECT caged_final.ANO,
               ELSE dim_terri.NO_MUNICIPIO END AS NO_MUNICIPIO, 
        caged_final.CO_CBO,
        caged_final.CO_CBO_FAMILIA,
-       AVG(caged_final.salario) AS SALARIO_MEDIO,
-       AVG(caged_final.SALARIO_ADMITIDOS) AS SALARIO_ADMITIDOS,
-       AVG(caged_final.SALARIO_DESLIGADOS) AS SALARIO_DESLIGADOS,
-       SUM(caged_final.admitidos) AS SUM_ADMITIDOS,
-       SUM(caged_final.desligados) AS SUM_DESLIGADOS,
-       SUM( caged_final.admitidos - caged_final.desligados) AS SALDO_EMPREGO
-    --    COALESCE( AVG(caged_final.SALARIO_ADMITIDOS) / NULLIF(AVG(caged_final.SALARIO_DESLIGADOS), 0), 1) AS PRESSAO_SALARIAL
+       caged_final.SALARIO_MEDIO,
+       caged_final.SALARIO_ADMITIDOS AS SALARIO_ADMITIDOS,
+       caged_final.SALARIO_DESLIGADOS AS SALARIO_DESLIGADOS,
+       caged_final.SUM_ADMITIDOS,
+       caged_final.SUM_DESLIGADOS
          
 FROM CAGED_BAHIA_CTE caged_final
 LEFT JOIN DB_OBSERVATORIO.referencia.dimensao_territorio_territorio_identidade dim_terri ON caged_final.municipio = dim_terri.CO_MUN_IBGE_6
-GROUP BY caged_final.ANO,  dim_terri.NO_MUNICIPIO, caged_final.CO_CBO, caged_final.CO_CBO_FAMILIA, caged_final.salario
-HAVING 
-    COALESCE( AVG(caged_final.SALARIO_ADMITIDOS) / NULLIF(AVG(caged_final.SALARIO_DESLIGADOS), 0), 1) > 0
-
-ORDER BY NO_MUNICIPIO, CO_CBO DESC
 ;''')
 
 df_caged['NO_MUNICIPIO_COD'] = limpar_texto(df_caged['NO_MUNICIPIO'])
@@ -243,163 +229,101 @@ df_caged_2 = df_caged_1.groupby(['ANO', 'UNIDADE', 'CO_CBO','CBO_UNIDADE'], as_i
                                                                                                  'SALARIO_DESLIGADOS':'mean',
                                                                                                  'SALARIO_MEDIO':'mean',
                                                                                                  'SUM_ADMITIDOS':'sum',
-                                                                                                 'SUM_DESLIGADOS':'sum',
-                                                                                                 'SALDO_EMPREGO':'sum'})
-df_caged_2['PRESSAO_SALARIAL'] = df_caged_2.apply(lambda row: row['SALARIO_ADMITIDOS'] / row['SALARIO_DESLIGADOS'] if row['SALARIO_DESLIGADOS'] > 0 else 0, axis=1)
+                                                                                                 'SUM_DESLIGADOS':'sum'
+                                                                                                 })
+df_caged_2['SALDO_EMPREGO'] = df_caged_2['SUM_ADMITIDOS'] - df_caged_2['SUM_DESLIGADOS']
 # df_caged_2 = pd.read_excel(r"C:\Users\anderson.pereira\OneDrive - Sistema FIEB\Inteligência de Mercado\Data Science\DeploymentML\Streamlit_dsim_ML\df_caged_2.xlsx")
 
 ####################################################################################################
 # >>>>>>> - FONTE SISTEC - <<<<<<< #
-files = r'C:\Users\anderson.pereira\OneDrive - Sistema FIEB\Inteligência de Mercado\Data Science\Dados_Concorrencia_TS'
-excel_files = glob.glob(os.path.join(files, '*.xlsx'))
 
-dataframes = []
-for file in excel_files:
-    df = pd.read_excel(file)
-    dataframes.append(df)
-concorrencia = pd.concat(dataframes, ignore_index=True)
-concorrencia = concorrencia[~concorrencia['UNIDADE_DE_ENSINO'].str.contains('SENAI',case=False, na=False)]
-concorrencia['MODALIDADE'] = concorrencia['MODALIDADE'].replace({'Educação Presencial':'PRES','Educação a Distância':'EAD'})
-concorrencia['ANO'] = pd.to_datetime(concorrencia['Dt_SCRAPING'], dayfirst=True).dt.year
-concorrencia['ANO'] = concorrencia['ANO'].replace({2026: 2025})
-concorrencia.drop(columns=['Dt_SCRAPING','AZURE_GEOLOCATOR'], inplace=True)
-concorrencia['QTD_CONC'] = 1
-concorrencia = concorrencia.drop_duplicates()
-concorrencia_1 = concorrencia.merge(municipio_unid[['MUNICIPIO','UNIDADE']], on= 'MUNICIPIO', how='left')
+caminho_pasta = r"C:\Users\anderson.pereira\OneDrive - Sistema FIEB\Inteligência de Mercado\Base de Dados - PS\Cubo_CHP"
 
-concorrencia_1['UNIDADE_DE_ENSINO_AJUSTADO'] = (
-        concorrencia_1['UNIDADE_DE_ENSINO']
-        .str.upper()
-        .str.replace(r'^\d+', '', regex=True)
-        .str.replace(r'[-–/]', ' ', regex=True)
-        .str.replace(r'\s+', ' ', regex=True)
-        .str.strip()
-    )
+padrao_arquivos = os.path.join(caminho_pasta, "*.xlsx")
+lista_arquivos = glob.glob(padrao_arquivos)
 
-substituicoes = {
-        'CENTRO ESTADUAL DE EDUCACAO PROFISSIONAL': 'CEEP',
-        'CENTRO EST DE ED PROFISSIONAL':'CEEP',
-        'CENTRO EST DE EDUC PROFISSIONAL': 'CEEP',
-        'CENTRO TERRITORIAL DE EDUCAÇÃO PROFISSIONAL':'CTEP',
-        'CENTRO DE EDUCAÇÃO PROFISSIONAL COMÉRCIO':'SENAC',
-        'CENTRO DE EDUCAÇÃO PROFISSIONAL SENAC CASA DO COMÉRCIO': 'SENAC',
-        'CENTRO DE EDUCAÇÃO PROFISSIONAL SENAC LAURO DE FREITAS' : 'SENAC',
-        'CENTRO DE EDUCAÇÃO PROFISSIONAL DE ALAGOINHAS CEP ALH': 'SENAC',
-        'SENAC CA':'SENAC',
-        'SENAC CAMAÇARI':'SENAC',
-        'SENAC CEP FS': 'SENAC',    
-        'SENAC CEP PITUBA': 'SENAC',
-        'SENAC CEP PS': 'SENAC',
-        'SENAC CEP SANTO ANTONIO DE JESUS': 'SENAC',
-        'SENAC CEP VC': 'SENAC',
-        'SENAC FEIRA DE SANTANA': 'SENAC',
-        'SENAC SÉ': 'SENAC',
-        'CENTRO DE EDUCACAO PROFISSIONAL': 'CEP',
-        'CENTRO EDUCACIONAL MUNICIPAL': 'CEM',
-        'CENTRO DE EDUCACAO': 'CE',
-        'CENTRO EDUCACIONAL': 'CE',
-        'CASA FAMILIAR AGROFLORESTAL': 'CFA',
-        'CASA FAMILIAR RURAL': 'CFR',
-        'CENTRO DE ENSINO GRAU T UNIDADE CAJAZEIRAS': 'GRAU TÉCNICO',
-        'CENTRO DE ENSINO GRAU TÉCNICO FEIRA DE SANTANA BA': 'GRAU TÉCNICO',
-        'CENTRO DE ENSINO GRAU TÉCNICO UNID VITÓRIA DA CONQUISTA': 'GRAU TÉCNICO',
-        'CENTRO DE ENSINO GRAU TÉCNICO UNIDADE CAMAÇARI': 'GRAU TÉCNICO',
-        'CENTRO DE ENSINO GRAU TÉCNICO UNIDADE PAULO AFONSO BA': 'GRAU TÉCNICO',
-        'CENTRO DE ENSINO GRAU TÉCNICO UNIDADE PLATAFORMA': 'GRAU TÉCNICO',
-        'CENTRO DE ENSINO GRAU TÉCNICO UNIDADE SÃO CRISTÓVÃO': 'GRAU TÉCNICO',
-        'CENTRO DE ENSINO GRAU TÉCNICO JUAZEIRO': 'GRAU TÉCNICO',
-        'CENTRO DE ENSINO GRAU TÉCNICO UNIDADE FONTE NOVA': 'GRAU TÉCNICO',
-        'GRAU TÉCNICO JUAZEIRO': 'GRAU TÉCNICO',
-        'GRAU TÉCNICO UNIDADE FONTE NOVA': 'GRAU TÉCNICO',
-        'CENTRO DE EXCELÊNCIA EM FRUTICULTURA' : 'SENAR',
-        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL BROTAS_MATATU': 'UNICSUL',
-        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL CAMAÇARI (ALTO DA CRUZ)': 'UNICSUL',
-        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL CONCEIÇÃO DO JACUÍPE': 'UNICSUL',
-        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL IPIAÚ _CENTRO': 'UNICSUL',
-        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL ITACARÉ': 'UNICSUL',
-        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL JEREMOABO': 'UNICSUL',
-        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL MORRO DO CHAPÉU': 'UNICSUL',
-        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL PIRITIBA': 'UNICSUL',
-        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POJUCA': 'UNICSUL',
-        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO ALAGOINHAS': 'UNICSUL',
-        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO ARACI': 'UNICSUL',
-        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO BARRA': 'UNICSUL',
-        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO BARRA DA ESTIVA': 'UNICSUL',
-        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO BARREIRAS': 'UNICSUL',
-        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO CACHOEIRA': 'UNICSUL',
-        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO CAMACAN': 'UNICSUL',
-        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO CAMAMU': 'UNICSUL',
-        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO CAMAÇARI': 'UNICSUL',
-        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO CAMAÇARI_AREMBEPE': 'UNICSUL',
-        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO CANAVIEIRAS': 'UNICSUL',
-        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO CANDIDO SALES': 'UNICSUL',
-        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO CATU': 'UNICSUL',
-        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO CONCEICAO DO COITE': 'UNICSUL',
-        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO CONCEIÇAO DA FEIRA': 'UNICSUL',
-        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO ENTRE RIOS': 'UNICSUL',
-        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO EUCLIDES DA CUNHA': 'UNICSUL',
-        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO EUNAPOLIS': 'UNICSUL',
-        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO FEIRA DE SANTANA_CID. NOVA': 'UNICSUL',
-        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO GANDU': 'UNICSUL',
-        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO GUARATINGA': 'UNICSUL',
-        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO IBOTIRAMA': 'UNICSUL',
-        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO ILHEUS': 'UNICSUL',
-        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO INHAMBUPE': 'UNICSUL',
-        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO IRECE': 'UNICSUL',
-        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO ITAPETINGA': 'UNICSUL',
-        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO ITUBERA_NOBERTO ODEBRECHT': 'UNICSUL',
-        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO JACOBINA': 'UNICSUL',
-        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO JOAO DOURADO': 'UNICSUL',
-        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO JUAZEIRO': 'UNICSUL',
-        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO LUIS EDUARDO MAGALHAES': 'UNICSUL',
-        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO MARACAS': 'UNICSUL',
-        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO MUCURI_ITABATA': 'UNICSUL',
-        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO NOVA VICOSA_POSTO DA MATA': 'UNICSUL',
-        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO OLINDINA': 'UNICSUL',
-        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO OLIVEIRA DOS BREJINHOS': 'UNICSUL',
-        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO PILAO ARCADO': 'UNICSUL',
-        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO PLANALTO': 'UNICSUL',
-        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO PORTO SEGURO': 'UNICSUL',
-        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO PRADO': 'UNICSUL',
-        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO PRESIDENTE TANCREDO NEVES': 'UNICSUL',
-        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO RIBEIRA DO POMBAL': 'UNICSUL',
-        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO RIO REAL': 'UNICSUL',
-        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO SALVADOR_CENTENARIO': 'UNICSUL',
-        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO SALVADOR_LIBERDADE': 'UNICSUL',
-        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO SALVADOR_LOBATO': 'UNICSUL',
-        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO SALVADOR_NAZARE': 'UNICSUL',
-        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO SALVADOR_PARIPE': 'UNICSUL',
-        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO SALVADOR_ROMA': 'UNICSUL',
-        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO SALVADOR_SAO CRISTOVAO': 'UNICSUL',
-        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO SANTA MARIA DA VITÓRIA': 'UNICSUL',
-        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO SANTALUZ': 'UNICSUL',
-        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO SANTO ANTONIO DE JESUS': 'UNICSUL',
-        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO SANTO ESTEVAO': 'UNICSUL',
-        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO SATIRO DIAS': 'UNICSUL',
-        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO SERRINHA': 'UNICSUL',
-        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO SIMOES FILHO': 'UNICSUL',
-        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO TANHACU': 'UNICSUL',
-        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO TEIXEIRA DE FREITAS': 'UNICSUL',
-        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO TEOFILANDIA': 'UNICSUL',
-        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO VALENCA': 'UNICSUL',
-        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO VALENTE': 'UNICSUL',
-        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO VITORIA DA CONQUISTA': 'UNICSUL',
-        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL PORTO SEGURO (PARQUE ECOLÓGICO)': 'UNICSUL',
-        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL VERA CRUZ': 'UNICSUL',
-        'UNICSUL_AREMBEPE': 'UNICSUL',
-        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL CAMAÇARI (ALTO DA CRUZ)': 'UNICSUL',
-        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL PORTO SEGURO (PARQUE ECOLÓGICO)': 'UNICSUL',
-        'SE7E CENTRO TECNOLÓGICO REMANSO': 'SE7E CENTRO TECNOLÓGICO',
-        'SE7E CENTRO TECNOLÓGICO SALVADOR': 'SE7E CENTRO TECNOLÓGICO',
-        'PROCURSOS SERVIÇOS DE EDUCAÇÃO':'PROCURSOS',
-        'CENTRO DE ESTUDOS TÉCNICOS, TREINAMENTOS PROFISSIONAIS E SERVIÇOS - CETTPS':"CETTP'S - CETTPS",
-    }
-concorrencia_1['UNIDADE_DE_ENSINO_AJUSTADO'] = concorrencia_1['UNIDADE_DE_ENSINO_AJUSTADO'].replace(substituicoes, regex=True)
-concorrencia_1.sort_values(by=['UNIDADE_DE_ENSINO_AJUSTADO','CURSO','MUNICIPIO','MODALIDADE'], inplace=True)
-concorrencia_sistec = concorrencia_1.groupby(['ANO', 'CURSO','UNIDADE'], as_index=False).agg({'UNIDADE_DE_ENSINO_AJUSTADO':'nunique'})
-concorrencia_sistec.rename(columns={'UNIDADE_DE_ENSINO_AJUSTADO':'QTD_CONC'}, inplace=True)
-concorrencia_sistec['QTD_MAT_CONC'] = 0
+print(f"Arquivos encontrados: {len(lista_arquivos)}")
+for arq in lista_arquivos:
+    print(arq)
 
+
+lista_df = []
+for arquivo in lista_arquivos:
+    df_temp = pd.read_excel(arquivo, sheet_name='Sheet', header=0)
+    lista_df.append(df_temp)
+
+dataset_CHP_PS = pd.concat(lista_df, ignore_index=True)
+
+colunas_filtrar = [
+    'TIPO_ALUNO', 'TIPO_MATRICULA', 'SITUACAO_CURSO', 'SITUAÇÃO_MAT_PERIODO_LETIVO', 'TIPO_GRATUIDADE','UNIDADE', 'CURSO',
+    'MODALIDADE', 'TURNO', 'PERIODO_LETIVO', 'PERIODO_ALUNO', 'IDADE', 'CPF', 'RA', 'SEXO', 'CIDADE']
+
+colunas_existentes = [c for c in colunas_filtrar if c in dataset_CHP_PS.columns]
+mascara_valida = pd.Series([True] * len(dataset_CHP_PS), index=dataset_CHP_PS.index)
+
+for col in colunas_existentes:
+    serie_col = dataset_CHP_PS[col].astype(str).str.strip().str.lower()
+    eh_total = serie_col.str.contains(r'\btotal\b', na = False)
+    mascara_valida = mascara_valida & ~eh_total
+dataset_CHP_PS = dataset_CHP_PS[mascara_valida].reset_index(drop=True)
+cols_numericas = dataset_CHP_PS.select_dtypes(include=['number']).columns
+dataset_CHP_PS[cols_numericas] = dataset_CHP_PS[cols_numericas].fillna(0)
+
+condicoes = [
+    dataset_CHP_PS["IDADE"].isna() | (dataset_CHP_PS["IDADE"] <= 14),
+    dataset_CHP_PS["IDADE"] <= 17,
+    dataset_CHP_PS["IDADE"] <= 24,
+    dataset_CHP_PS["IDADE"] <= 30,
+    dataset_CHP_PS["IDADE"] <= 39,
+    dataset_CHP_PS["IDADE"] <= 50,
+    dataset_CHP_PS["IDADE"] <= 59,
+    dataset_CHP_PS["IDADE"] >= 60
+]
+
+faixas = [
+    "Menor de 14 anos",
+    "14 a 17",
+    "18 a 24",
+    "25 a 30",
+    "31 a 39",
+    "40 a 50",
+    "51 a 59",
+    "+ 60"
+]
+
+# dataset_CHP_PS["FAIXA_ETARIA"] = np.select(condicoes, faixas, default="Sem faixa")
+
+dataset_CHP_PS["UNIDADE"] = dataset_CHP_PS["UNIDADE"].str.replace(r"^SENAI\s+", "", regex=True)
+dataset_CHP_PS["UNIDADE"] = dataset_CHP_PS["UNIDADE"].str.replace(r"\bDENDEZEIROS\b|\bCIMATEC\b", "SALVADOR", regex=True)
+dataset_CHP_PS["UNIDADE"] = dataset_CHP_PS["UNIDADE"].str.strip()
+dataset_CHP_PS['ANO'] = dataset_CHP_PS['PERIODO_LETIVO'].astype(str).str[:4].astype(int)
+dataset_CHP_PS['CPF_E_RA'] = dataset_CHP_PS['CPF'].astype(str) + dataset_CHP_PS['RA'].astype(str)
+dataset_CHP_PS['MATRICULAS'] = 1
+dataset_CHP_PS['CIDADE'] = dataset_CHP_PS['CIDADE'].str.strip().str.upper()
+dataset_CHP_PS['CIDADE'] = np.where(dataset_CHP_PS['CIDADE'] == 'ARAÇAS', 'ARAÇÁS', 
+                                        np.where(dataset_CHP_PS['CIDADE'] == 'SANTO ESTEVÃO', 'SANTO ESTÊVÃO', 
+                                                 np.where(dataset_CHP_PS['CIDADE'] == 'SAO SEBASTIAO DO PASSE', 'SÃO SEBASTIÃO DO PASSÉ',
+                                                          np.where(dataset_CHP_PS['CIDADE'] == 'NOVO HORIZONTE', 'CAMAÇARI',
+                                                                   np.where(dataset_CHP_PS['CIDADE'] == 'PETROLINA', 'JUAZEIRO',
+                                                                            np.where(dataset_CHP_PS['CIDADE'] == 'PORTO ALEGRE DO TOCANTINS', 'LUÍS EDUARDO MAGALHÃES',
+                                                                                     np.where(dataset_CHP_PS['CIDADE'] == 'TAMBAÚ', 'CAMAÇARI',
+                                                                                     dataset_CHP_PS['CIDADE'])))))))
+dataset_CHP_PS['CIDADE_COD'] = limpar_texto(dataset_CHP_PS['CIDADE'])
+dataset_CHP_PS = dataset_CHP_PS.drop(columns=['MUNICIPIO'], errors='ignore')
+
+dataset_CHP_PS_0 = dataset_CHP_PS.merge(municipio_unid[['MUNICIPIO','MUNICIPIO_COD']], left_on='CIDADE_COD', right_on='MUNICIPIO_COD', how='left').drop(
+                                columns=['MUNICIPIO_COD','CIDADE', 'CIDADE_COD'], errors='ignore')
+
+df_CHP = dataset_CHP_PS_0.groupby(['ANO', 'UNIDADE','CURSO'],as_index=False).agg({'MATRICULAS':'sum'})
+# df_CHP = dataset_CHP_PS_0.groupby(['ANO', 'UNIDADE', 'MUNICIPIO','CURSO', 'TURNO','FAIXA_ETARIA'],as_index=False).agg({'MATRICULAS':'sum'})
+df_CHP.columns = df_CHP.columns.str.strip()
+
+ano_ref = 2025
+df_CHP_Pagante_menor_ = df_CHP[df_CHP['ANO'] <= ano_ref]
+df_CHP_Pagante_igual_ = df_CHP_Pagante_menor_.copy(deep=True)
+df_CHP_Pagante_igual_['CURSO'] = df_CHP_Pagante_igual_['CURSO'].str.upper()
+df_CHP_Pagante_igual_['CURSO'] = (df_CHP_Pagante_igual_['CURSO'].str.replace(r'^TÉCNICO\s+EM\s+', '', regex=True, flags=re.IGNORECASE).str.strip().str.upper())
+df_CHP_Pagante_igual_['UNIDADE'] = df_CHP_Pagante_igual_['UNIDADE'].replace({'LEM':'LUÍS EDUARDO MAGALHÃES','FEIRA':'FEIRA DE SANTANA','CONQUISTA':'VITÓRIA DA CONQUISTA'})
 
 ####################################################################################################
 # >>>>>>> - FONTE INEP - <<<<<<< #
@@ -561,6 +485,198 @@ df_curso_tec_inep_2['QTD_CONC'] = df_curso_tec_inep_2['QTD_CONC'].astype(int)
 df_curso_tec_inep_2['QTD_MAT_CONC'] = df_curso_tec_inep_2['QTD_MAT_CONC'].astype(int)
 # df_curso_tec_inep_2 = pd.read_excel(r"C:\Users\anderson.pereira\OneDrive - Sistema FIEB\Inteligência de Mercado\Data Science\DeploymentML\Streamlit_dsim_ML\df_curso_tec_inep_2.xlsx")
 
+
+####################################################################################################
+# >>>>>>> - FONTE SISTEC - <<<<<<< #
+files = r'C:\Users\anderson.pereira\OneDrive - Sistema FIEB\Inteligência de Mercado\Data Science\Dados_Concorrencia_TS'
+excel_files = glob.glob(os.path.join(files, '*.xlsx'))
+
+dataframes = []
+for file in excel_files:
+    df = pd.read_excel(file)
+    dataframes.append(df)
+concorrencia = pd.concat(dataframes, ignore_index=True)
+concorrencia = concorrencia[~concorrencia['UNIDADE_DE_ENSINO'].str.contains('SENAI',case=False, na=False)]
+concorrencia['MODALIDADE'] = concorrencia['MODALIDADE'].replace({'Educação Presencial':'PRES','Educação a Distância':'EAD'})
+concorrencia['ANO'] = pd.to_datetime(concorrencia['Dt_SCRAPING'], dayfirst=True).dt.year
+concorrencia['ANO'] = concorrencia['ANO'].replace({2026: 2025})
+concorrencia.drop(columns=['Dt_SCRAPING','AZURE_GEOLOCATOR'], inplace=True)
+concorrencia['QTD_CONC'] = 1
+concorrencia = concorrencia.drop_duplicates()
+concorrencia_1 = concorrencia.merge(municipio_unid[['MUNICIPIO','UNIDADE']], on= 'MUNICIPIO', how='left')
+
+concorrencia_1['UNIDADE_DE_ENSINO_AJUSTADO'] = (
+        concorrencia_1['UNIDADE_DE_ENSINO']
+        .str.upper()
+        .str.replace(r'^\d+', '', regex=True)
+        .str.replace(r'[-–/]', ' ', regex=True)
+        .str.replace(r'\s+', ' ', regex=True)
+        .str.strip()
+    )
+
+substituicoes = {
+        'CENTRO ESTADUAL DE EDUCACAO PROFISSIONAL': 'CEEP',
+        'CENTRO EST DE ED PROFISSIONAL':'CEEP',
+        'CENTRO EST DE EDUC PROFISSIONAL': 'CEEP',
+        'CENTRO TERRITORIAL DE EDUCAÇÃO PROFISSIONAL':'CTEP',
+        'CENTRO DE EDUCAÇÃO PROFISSIONAL COMÉRCIO':'SENAC',
+        'CENTRO DE EDUCAÇÃO PROFISSIONAL SENAC CASA DO COMÉRCIO': 'SENAC',
+        'CENTRO DE EDUCAÇÃO PROFISSIONAL SENAC LAURO DE FREITAS' : 'SENAC',
+        'CENTRO DE EDUCAÇÃO PROFISSIONAL DE ALAGOINHAS CEP ALH': 'SENAC',
+        'SENAC CA':'SENAC',
+        'SENAC CAMAÇARI':'SENAC',
+        'SENAC CEP FS': 'SENAC',    
+        'SENAC CEP PITUBA': 'SENAC',
+        'SENAC CEP PS': 'SENAC',
+        'SENAC CEP SANTO ANTONIO DE JESUS': 'SENAC',
+        'SENAC CEP VC': 'SENAC',
+        'SENAC FEIRA DE SANTANA': 'SENAC',
+        'SENAC SÉ': 'SENAC',
+        'CENTRO DE EDUCACAO PROFISSIONAL': 'CEP',
+        'CENTRO EDUCACIONAL MUNICIPAL': 'CEM',
+        'CENTRO DE EDUCACAO': 'CE',
+        'CENTRO EDUCACIONAL': 'CE',
+        'CASA FAMILIAR AGROFLORESTAL': 'CFA',
+        'CASA FAMILIAR RURAL': 'CFR',
+        'CENTRO DE ENSINO GRAU T UNIDADE CAJAZEIRAS': 'GRAU TÉCNICO',
+        'CENTRO DE ENSINO GRAU TÉCNICO FEIRA DE SANTANA BA': 'GRAU TÉCNICO',
+        'CENTRO DE ENSINO GRAU TÉCNICO UNID VITÓRIA DA CONQUISTA': 'GRAU TÉCNICO',
+        'CENTRO DE ENSINO GRAU TÉCNICO UNIDADE CAMAÇARI': 'GRAU TÉCNICO',
+        'CENTRO DE ENSINO GRAU TÉCNICO UNIDADE PAULO AFONSO BA': 'GRAU TÉCNICO',
+        'CENTRO DE ENSINO GRAU TÉCNICO UNIDADE PLATAFORMA': 'GRAU TÉCNICO',
+        'CENTRO DE ENSINO GRAU TÉCNICO UNIDADE SÃO CRISTÓVÃO': 'GRAU TÉCNICO',
+        'CENTRO DE ENSINO GRAU TÉCNICO JUAZEIRO': 'GRAU TÉCNICO',
+        'CENTRO DE ENSINO GRAU TÉCNICO UNIDADE FONTE NOVA': 'GRAU TÉCNICO',
+        'GRAU TÉCNICO JUAZEIRO': 'GRAU TÉCNICO',
+        'GRAU TÉCNICO UNIDADE FONTE NOVA': 'GRAU TÉCNICO',
+        'CENTRO DE EXCELÊNCIA EM FRUTICULTURA' : 'SENAR',
+        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL BROTAS_MATATU': 'UNICSUL',
+        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL CAMAÇARI (ALTO DA CRUZ)': 'UNICSUL',
+        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL CONCEIÇÃO DO JACUÍPE': 'UNICSUL',
+        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL IPIAÚ _CENTRO': 'UNICSUL',
+        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL ITACARÉ': 'UNICSUL',
+        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL JEREMOABO': 'UNICSUL',
+        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL MORRO DO CHAPÉU': 'UNICSUL',
+        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL PIRITIBA': 'UNICSUL',
+        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POJUCA': 'UNICSUL',
+        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO ALAGOINHAS': 'UNICSUL',
+        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO ARACI': 'UNICSUL',
+        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO BARRA': 'UNICSUL',
+        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO BARRA DA ESTIVA': 'UNICSUL',
+        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO BARREIRAS': 'UNICSUL',
+        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO CACHOEIRA': 'UNICSUL',
+        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO CAMACAN': 'UNICSUL',
+        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO CAMAMU': 'UNICSUL',
+        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO CAMAÇARI': 'UNICSUL',
+        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO CAMAÇARI_AREMBEPE': 'UNICSUL',
+        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO CANAVIEIRAS': 'UNICSUL',
+        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO CANDIDO SALES': 'UNICSUL',
+        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO CATU': 'UNICSUL',
+        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO CONCEICAO DO COITE': 'UNICSUL',
+        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO CONCEIÇAO DA FEIRA': 'UNICSUL',
+        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO ENTRE RIOS': 'UNICSUL',
+        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO EUCLIDES DA CUNHA': 'UNICSUL',
+        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO EUNAPOLIS': 'UNICSUL',
+        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO FEIRA DE SANTANA_CID. NOVA': 'UNICSUL',
+        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO GANDU': 'UNICSUL',
+        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO GUARATINGA': 'UNICSUL',
+        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO IBOTIRAMA': 'UNICSUL',
+        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO ILHEUS': 'UNICSUL',
+        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO INHAMBUPE': 'UNICSUL',
+        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO IRECE': 'UNICSUL',
+        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO ITAPETINGA': 'UNICSUL',
+        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO ITUBERA_NOBERTO ODEBRECHT': 'UNICSUL',
+        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO JACOBINA': 'UNICSUL',
+        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO JOAO DOURADO': 'UNICSUL',
+        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO JUAZEIRO': 'UNICSUL',
+        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO LUIS EDUARDO MAGALHAES': 'UNICSUL',
+        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO MARACAS': 'UNICSUL',
+        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO MUCURI_ITABATA': 'UNICSUL',
+        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO NOVA VICOSA_POSTO DA MATA': 'UNICSUL',
+        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO OLINDINA': 'UNICSUL',
+        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO OLIVEIRA DOS BREJINHOS': 'UNICSUL',
+        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO PILAO ARCADO': 'UNICSUL',
+        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO PLANALTO': 'UNICSUL',
+        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO PORTO SEGURO': 'UNICSUL',
+        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO PRADO': 'UNICSUL',
+        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO PRESIDENTE TANCREDO NEVES': 'UNICSUL',
+        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO RIBEIRA DO POMBAL': 'UNICSUL',
+        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO RIO REAL': 'UNICSUL',
+        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO SALVADOR_CENTENARIO': 'UNICSUL',
+        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO SALVADOR_LIBERDADE': 'UNICSUL',
+        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO SALVADOR_LOBATO': 'UNICSUL',
+        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO SALVADOR_NAZARE': 'UNICSUL',
+        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO SALVADOR_PARIPE': 'UNICSUL',
+        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO SALVADOR_ROMA': 'UNICSUL',
+        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO SALVADOR_SAO CRISTOVAO': 'UNICSUL',
+        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO SANTA MARIA DA VITÓRIA': 'UNICSUL',
+        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO SANTALUZ': 'UNICSUL',
+        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO SANTO ANTONIO DE JESUS': 'UNICSUL',
+        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO SANTO ESTEVAO': 'UNICSUL',
+        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO SATIRO DIAS': 'UNICSUL',
+        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO SERRINHA': 'UNICSUL',
+        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO SIMOES FILHO': 'UNICSUL',
+        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO TANHACU': 'UNICSUL',
+        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO TEIXEIRA DE FREITAS': 'UNICSUL',
+        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO TEOFILANDIA': 'UNICSUL',
+        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO VALENCA': 'UNICSUL',
+        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO VALENTE': 'UNICSUL',
+        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL POLO VITORIA DA CONQUISTA': 'UNICSUL',
+        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL PORTO SEGURO (PARQUE ECOLÓGICO)': 'UNICSUL',
+        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL VERA CRUZ': 'UNICSUL',
+        'UNICSUL_AREMBEPE': 'UNICSUL',
+        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL CAMAÇARI (ALTO DA CRUZ)': 'UNICSUL',
+        'UNIVERSIDADE CRUZEIRO DO SUL UNICSUL PORTO SEGURO (PARQUE ECOLÓGICO)': 'UNICSUL',
+        'SE7E CENTRO TECNOLÓGICO REMANSO': 'SE7E CENTRO TECNOLÓGICO',
+        'SE7E CENTRO TECNOLÓGICO SALVADOR': 'SE7E CENTRO TECNOLÓGICO',
+        'PROCURSOS SERVIÇOS DE EDUCAÇÃO':'PROCURSOS',
+        'CENTRO DE ESTUDOS TÉCNICOS, TREINAMENTOS PROFISSIONAIS E SERVIÇOS - CETTPS':"CETTP'S - CETTPS",
+    }
+concorrencia_1['UNIDADE_DE_ENSINO_AJUSTADO'] = concorrencia_1['UNIDADE_DE_ENSINO_AJUSTADO'].replace(substituicoes, regex=True)
+concorrencia_1.sort_values(by=['UNIDADE_DE_ENSINO_AJUSTADO','CURSO','MUNICIPIO','MODALIDADE'], inplace=True)
+concorrencia_sistec = concorrencia_1.groupby(['ANO', 'CURSO','UNIDADE'], as_index=False).agg({'UNIDADE_DE_ENSINO_AJUSTADO':'nunique'})
+concorrencia_sistec.rename(columns={'UNIDADE_DE_ENSINO_AJUSTADO':'QTD_CONC'}, inplace=True)
+concorrencia_sistec['QTD_MAT_CONC'] = 0
+
+
+####################################################################################################
+# >>>>>>> - FONTE BOLSA FAMILIA - <<<<<<< #
+df_bolsaf = consulta('''
+SELECT
+      year(bolsa.referencia) as ANO
+      ,bolsa.familias_pbf_pos_2023 as QTD_FAMILIAS
+      ,bolsa.valor_repasse_familias_pbf_a_partir_2023 as TOTAL_REPASSE
+      ,bolsa.valor_beneficio_medio_apos_mar_2023 as VLR_MEDIO_BENEFICIO
+      ,CASE WHEN dim_terri.NO_MUNICIPIO = 'CAMACARI' THEN 'CAMAÇARI'
+            WHEN dim_terri.NO_MUNICIPIO = 'EUNAPOLIS' THEN 'EUNÁPOLIS'
+            WHEN dim_terri.NO_MUNICIPIO = 'ILHEUS' THEN 'ILHÉUS'
+            WHEN dim_terri.NO_MUNICIPIO = 'VITORIA DA CONQUISTA' THEN 'VITÓRIA DA CONQUISTA'
+            WHEN dim_terri.NO_MUNICIPIO = 'JEQUIE' THEN 'JEQUIÉ'
+            WHEN dim_terri.NO_MUNICIPIO = 'LUIS EDUARDO MAGALHAES' THEN 'LUÍS EDUARDO MAGALHÃES'
+            WHEN dim_terri.NO_MUNICIPIO = 'SENHOR DO BONFIN' THEN 'SENHOR DO BONFIM'
+            WHEN dim_terri.NO_MUNICIPIO = 'SANTO ANTONIO DE JESUS' THEN 'SANTO ANTÔNIO DE JESUS'
+            WHEN dim_terri.NO_MUNICIPIO = 'SAO GONCALO DOS CAMPOS' THEN 'SÃO GONÇALO DOS CAMPOS'
+            WHEN dim_terri.NO_MUNICIPIO = 'SAO SEBASTIAO DO PASSE' THEN 'SÃO SEBASTIÃO DO PASSE'
+            WHEN dim_terri.NO_MUNICIPIO = 'SAO FELIPE' THEN 'SÃO FELIPE'
+            WHEN dim_terri.NO_MUNICIPIO = 'SAO FRANCISCO DO CONDE' THEN 'SÃO FRANCISCO DO CONDE'
+            WHEN dim_terri.NO_MUNICIPIO = 'SIMOES FILHO' THEN 'SIMÕES FILHO' ELSE dim_terri.NO_MUNICIPIO END AS NO_MUNICIPIO  
+FROM DB_OBSERVATORIO.cadunico.bolsa_familia_familias bolsa
+LEFT JOIN DB_OBSERVATORIO.referencia.dimensao_territorio_territorio_identidade dim_terri ON bolsa.CO_MUN_IBGE_6 = dim_terri.CO_MUN_IBGE_6
+WHERE YEAR(bolsa.referencia) IN (2023, 2024, 2025) AND bolsa.uf = 'BA'
+ORDER BY dim_terri.NO_MUNICIPIO, year(bolsa.referencia)
+;
+''')
+
+df_bolsaf['NO_MUNICIPIO_COD'] = limpar_texto(df_bolsaf['NO_MUNICIPIO'])
+df_bolsaf_1 = df_bolsaf.merge(municipio_unid[['MUNICIPIO','UNIDADE','MUNICIPIO_COD']], 
+                            left_on='NO_MUNICIPIO_COD', right_on='MUNICIPIO_COD', how='left').drop(
+                                columns=['MUNICIPIO_COD','NO_MUNICIPIO', 'NO_MUNICIPIO_COD'], errors='ignore')
+df_bolsaf_2 = df_bolsaf_1.groupby(['ANO','UNIDADE'], as_index=False).agg({'QTD_FAMILIAS':'sum', 
+                                                                          'TOTAL_REPASSE':'sum', 
+                                                                          'VLR_MEDIO_BENEFICIO':'mean'})
+# df_bolsaf_2 = pd.read_excel(r"C:\Users\anderson.pereira\OneDrive - Sistema FIEB\Inteligência de Mercado\Data Science\DeploymentML\dsim-recomendacao-de-curso\df_bolsaf_2.xlsx")
+
+
 ####################################################################################################
 # >>>>>>> - FONTE CURSOS TÉCNICOS SENAI [CUBO] - <<<<<<< #
 caminho_pasta = r"C:\Users\anderson.pereira\OneDrive - Sistema FIEB\Inteligência de Mercado\Base de Dados - PS\Cubo_CHP"
@@ -572,14 +688,12 @@ print(f"Arquivos encontrados: {len(lista_arquivos)}")
 for arq in lista_arquivos:
     print(arq)
 
-
 lista_df = []
 for arquivo in lista_arquivos:
     df_temp = pd.read_excel(arquivo, sheet_name='Sheet', header=0)
     lista_df.append(df_temp)
 
 dataset_CHP_PS = pd.concat(lista_df, ignore_index=True)
-
 colunas_filtrar = [
     'TIPO_ALUNO', 'TIPO_MATRICULA', 'SITUACAO_CURSO', 'SITUAÇÃO_MAT_PERIODO_LETIVO', 'TIPO_GRATUIDADE','UNIDADE', 'CURSO',
     'MODALIDADE', 'TURNO', 'PERIODO_LETIVO', 'PERIODO_ALUNO', 'IDADE', 'CPF', 'RA', 'SEXO', 'CIDADE']
@@ -616,8 +730,6 @@ faixas = [
     "51 a 59",
     "+ 60"
 ]
-
-# dataset_CHP_PS["FAIXA_ETARIA"] = np.select(condicoes, faixas, default="Sem faixa")
 
 dataset_CHP_PS["UNIDADE"] = dataset_CHP_PS["UNIDADE"].str.replace(r"^SENAI\s+", "", regex=True)
 dataset_CHP_PS["UNIDADE"] = dataset_CHP_PS["UNIDADE"].str.replace(r"\bDENDEZEIROS\b|\bCIMATEC\b", "SALVADOR", regex=True)
@@ -743,7 +855,7 @@ df_catalogo_cnct_2 = pd.concat([df_catalogo_cnct_1_tec, df_catalogo_cnct_1_outro
 df_catalogo_cnct_2 = df_catalogo_cnct_2[df_catalogo_cnct_2['CBO'].notna()].reset_index(drop=True)
 df_catalogo_cnct_2.drop_duplicates(inplace=True)
 df_catalogo_cnct_2=df_catalogo_cnct_2[df_catalogo_cnct_2['MODALIDADE'] == 'CHP'].reset_index(drop=True)
-df_catalogo_cnct_2.head(5)
+
 
 ##################################################+ # + # + # + # + # + # + # + # + # + # + # + # + #
 ##### >>>>>>> ETL <<<<<<< #####
@@ -774,9 +886,7 @@ join_CHP_itinerario_2025_1['CBO_UNIDADE'] = join_CHP_itinerario_2025_1['CBO'] + 
 
 # >>>>>>> - CAGED - <<<<<<< #
 join_CHP_itinerario_2025_2_caged = join_CHP_itinerario_2025_1.merge(
-    df_caged_2[['ANO','CBO_UNIDADE',
-                'SALARIO_MEDIO',
-                'SUM_ADMITIDOS','SUM_DESLIGADOS','SALDO_EMPREGO']],
+    df_caged_2[['ANO','CBO_UNIDADE', 'SALARIO_MEDIO', 'SUM_ADMITIDOS','SUM_DESLIGADOS','SALDO_EMPREGO']],
                     how='left', 
                     left_on=['CBO_UNIDADE','ANO'], 
                     right_on=['CBO_UNIDADE','ANO'])
@@ -794,31 +904,45 @@ join_CHP_itinerario_2025_4_caged = join_CHP_itinerario_2025_3_caged.merge(df_cur
                                                            how='left',
                                                            left_on=['UNIDADE','ANO','CURSO'],
                                                            right_on=['UNIDADE','ANO','CURSO'])
+
+join_CHP_itinerario_2025_5_caged = join_CHP_itinerario_2025_4_caged.merge(df_bolsaf_2[['ANO','UNIDADE','QTD_FAMILIAS','TOTAL_REPASSE','VLR_MEDIO_BENEFICIO']],
+                                                           how='left',
+                                                           left_on=['UNIDADE','ANO'],
+                                                           right_on=['UNIDADE','ANO'])
+
+# >>>>>>> - BOLSA FAMILIA - <<<<<<< #
+join_CHP_itinerario_2025_5_caged = join_CHP_itinerario_2025_4_caged.merge(df_bolsaf_2[['ANO','UNIDADE','QTD_FAMILIAS','TOTAL_REPASSE','VLR_MEDIO_BENEFICIO']],
+                                                           how='left',
+                                                           left_on=['UNIDADE','ANO'],
+                                                           right_on=['UNIDADE','ANO'])
+
 # >>>>>>> - DATAFRAME FINAL - <<<<<<< #
-join_CHP_itinerario_2025_5_caged = join_CHP_itinerario_2025_4_caged.groupby(['ANO','CURSO', 'UNIDADE'],
-                                                                             as_index=False).agg({'MAT_PAG': 'sum',
-                                                                                                  'QTD_CONC': 'sum', 
-                                                                                                #   'QTD_MAT_CONC': 'sum', 
-                                                                                                  'QTD_EMPRESAS': 'sum', 
-                                                                                                #   'QTD_VINCULOS': 'sum', 
-                                                                                                #   'SUM_ADMITIDOS': 'sum', 
-                                                                                                #   'SUM_DESLIGADOS': 'sum', 
-                                                                                                  'SALDO_EMPREGO': 'sum', 
-                                                                                                  'SALARIO_MEDIO': 'mean'})
+join_CHP_itinerario_2025_6_caged = join_CHP_itinerario_2025_5_caged.groupby(['ANO','CURSO', 'UNIDADE', 
+                                                                     ], as_index=False).agg({'MAT_PAG': 'sum',
+                                                                                             'QTD_CONC': 'sum', 
+                                                                                             'QTD_MAT_CONC': 'sum', 
+                                                                                             'QTD_EMPRESAS': 'sum', 
+                                                                                             'QTD_VINCULOS': 'sum', 
+                                                                                             'SUM_ADMITIDOS': 'sum', 
+                                                                                             'SUM_DESLIGADOS': 'sum', 
+                                                                                             'SALDO_EMPREGO': 'sum', 
+                                                                                             'SALARIO_MEDIO': 'mean',
+                                                                                             'QTD_FAMILIAS':'sum',
+                                                                                             'TOTAL_REPASSE':'sum',
+                                                                                             'VLR_MEDIO_BENEFICIO':'mean'})
 
-join_CHP_itinerario_2025_6_caged = join_CHP_itinerario_2025_5_caged.copy(deep=True)
-# join_CHP_itinerario_2025_6_caged['PRESSAO_SALARIAL'] = join_CHP_itinerario_2025_6_caged['PRESSAO_SALARIAL'].fillna(0).astype(float)
-join_CHP_itinerario_2025_6_caged = join_CHP_itinerario_2025_6_caged[(join_CHP_itinerario_2025_6_caged['SALDO_EMPREGO'].notnull())].reset_index(drop=True)
+join_CHP_itinerario_2025_7_caged = join_CHP_itinerario_2025_6_caged.copy(deep=True)
+join_CHP_itinerario_2025_7_caged = join_CHP_itinerario_2025_7_caged[(join_CHP_itinerario_2025_7_caged['SALDO_EMPREGO'].notnull()) & (join_CHP_itinerario_2025_7_caged['QTD_VINCULOS'].notnull())].reset_index(drop=True)
 
-labels_faixas = ['Abaixo ou igual a 20', 'Entre 21 e 40', 'Acima ou igual a 41']
-join_CHP_itinerario_2025_6_caged['FAIXA_MAT'] = pd.cut(join_CHP_itinerario_2025_6_caged['MAT_PAG'],
+labels_faixas = ['Abaixo de 21', 'Entre 21 e 40', 'Acima de 40']
+join_CHP_itinerario_2025_7_caged['FAIXA_MAT'] = pd.cut(join_CHP_itinerario_2025_7_caged['MAT_PAG'],
                                                        bins=[-np.inf, 20, 40, np.inf],
                                                        labels=labels_faixas,
                                                        right=True)
 
-cols_num = join_CHP_itinerario_2025_6_caged.select_dtypes(include='number').columns
-join_CHP_itinerario_2025_6_caged[cols_num] = (join_CHP_itinerario_2025_6_caged[cols_num].fillna(0))
+cols_num = join_CHP_itinerario_2025_7_caged.select_dtypes(include='number').columns
+join_CHP_itinerario_2025_7_caged[cols_num] = (join_CHP_itinerario_2025_7_caged[cols_num].fillna(0))
 
-join_CHP_itinerario_2025_6_caged.to_pickle(r"C:\Users\anderson.pereira\OneDrive - Sistema FIEB\Inteligência de Mercado\Data Science\DeploymentML\dsim-recomendacao-de-curso\dataset.pkl")
-# print(join_CHP_itinerario_2025_6_caged.head(5))
+join_CHP_itinerario_2025_7_caged.to_pickle(r"C:\Users\anderson.pereira\OneDrive - Sistema FIEB\Inteligência de Mercado\Data Science\DeploymentML\dsim-recomendacao-de-curso\dataset.pkl")
+# print(join_CHP_itinerario_2025_7_caged.head(5))
 print("Dataset final processado e salvo como dataset.pkl")

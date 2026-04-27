@@ -148,9 +148,9 @@ def grafico_real_barras_horizontais(probs_atual, ano_atual):
     })
 
     cores = {
-        FAIXAS[0]: "#1D3691",  # Abaixo ou igual a 20
+        FAIXAS[0]: "#1D3691",  # Abaixo de 21 matrículas
         FAIXAS[1]: "#795821",  # Entre 21 e 40
-        FAIXAS[2]: "#195E32"   # Acima ou igual a 41
+        FAIXAS[2]: "#195E32"   # Acima de 40 matrículas
     }
 
     fig = go.Figure()
@@ -212,9 +212,9 @@ def probabilidades_por_ano(df_base, unidade, curso):
 
 def grafico_real_linhas(df_series):
     cores = {
-        FAIXAS[0]: "#1D3691",  # Abaixo ou igual a 20
+        FAIXAS[0]: "#1D3691",  # Abaixo de 21 matrículas
         FAIXAS[1]: "#795821",  # Entre 21 e 40
-        FAIXAS[2]: "#195E32"   # Acima ou igual a 41
+        FAIXAS[2]: "#195E32"   # Acima de 40 matrículas
     }
 
     fig = go.Figure()
@@ -257,10 +257,10 @@ def analise_executiva_prob_real(faixa_dominante,prob_dominante,impactos_dict,lim
     # ======================================================
     # FAIXA BAIXA
     # ======================================================
-    if faixa_dominante == "Abaixo ou igual a 20":
+    if faixa_dominante == "Abaixo de 21 matrículas":
         texto = (
             "O cenário atual indica **baixa demanda**, com maior probabilidade "
-            "concentrada na faixa **abaixo ou igual a 20 matrículas**. "
+            "concentrada na faixa **abaixo de 21 matrículas matrículas**. "
             "Esse patamar reflete um **contexto desfavorável**, que tende a se manter "
             "caso não haja mudanças estruturais. "
             "A recomendação é utilizar o **simulador** para avaliar quais variáveis "
@@ -284,12 +284,12 @@ def analise_executiva_prob_real(faixa_dominante,prob_dominante,impactos_dict,lim
     # ======================================================
     # FAIXA ALTA
     # ======================================================
-    if faixa_dominante == "Acima ou igual a 41" and prob_dominante >= limite_otimo:
+    if faixa_dominante == "Acima de 40" and prob_dominante >= limite_otimo:
 
         if not impactos_neg.empty:
             texto = (
                 "Estamos em um **cenário excelente de demanda**, com elevada probabilidade "
-                "de permanência na faixa **acima ou igual a 41 matrículas**. "
+                "de permanência na faixa **acima de 40 matrículas**. "
                 "No entanto, o modelo indica que **movimentos adicionais no mercado**, "
                 f"especialmente relacionados a **{', '.join(nomes(impactos_neg.index[:2]))}**, "
                 "podem **deslocar parte da demanda**, reduzindo marginalmente "
@@ -299,7 +299,7 @@ def analise_executiva_prob_real(faixa_dominante,prob_dominante,impactos_dict,lim
         else:
             texto = (
                 "O cenário atual é **altamente favorável**, com elevada probabilidade "
-                "de permanência na faixa **acima ou igual a 41 matrículas**. "
+                "de permanência na faixa **acima de 40 matrículas**. "
                 "Não há sinais relevantes de risco no curto prazo. "
                 "A recomendação é **manter a estratégia vigente**."
             )
@@ -375,7 +375,7 @@ with tab1:
     ⁂ Este modelo utiliza técnicas de machine learning para 
     apoiar decisões estratégicas relacionadas à recomendação de curso por matrículas:
 
-       **📍Abaixo ou igual a 20 matrículas |📍 Entre 21 e 40 matrículas |📍 Acima ou igual a 41 matrículas**
+       **📍Abaixo de 21 matrículas |📍 Entre 21 e 40 matrículas |📍 Acima de 40 matrículas**
 
     ⁂ O foco do modelo é **apoio à decisão**, e **não previsão** pontual.
                 

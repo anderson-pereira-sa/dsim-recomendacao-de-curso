@@ -18,7 +18,8 @@ numericas_ohencoder = [
     'QTD_EMPRESAS',
     'QTD_CONC',
     'SALARIO_MEDIO',
-    'SALDO_EMPREGO'
+    'SALDO_EMPREGO',
+    'VLR_MEDIO_BENEFICIO'
     ]
 
 X_ohencoder = dataset_0[categoricas_ohencoder + numericas_ohencoder]
@@ -43,9 +44,9 @@ X_train, X_test, y_train, y_test = train_test_split(X_final_ohencoder, y_ohencod
 # >>>>>>> - Parâmetros do modelo - <<<<<<< #
 xgbc = XGBClassifier(
     objective='multi:softprob',
-    num_class=5,
+    num_class=3,
     eval_metric='mlogloss',
-    learning_rate=0.05,
+    learning_rate=0.006,
     max_depth=4,
     min_child_weight=2,
     subsample=0.95,
@@ -62,7 +63,8 @@ class_weights = compute_class_weight(class_weight='balanced',
 class_weight_dict = dict(zip(classes, class_weights))
 
 # >>>>>>> - Treinamento - <<<<<<< #
-xgbc.fit(X_train, y_train, sample_weight=y_train.map(class_weight_dict))
+sample_weight = np.vectorize(class_weight_dict.get)(y_train)
+xgbc.fit(X_train, y_train,sample_weight=sample_weight, eval_set=[(X_test, y_test)], verbose=False)
 xgbc.save_model("modelo_xgbc.json")
 
 with open("encoder.pkl", "wb") as f:
