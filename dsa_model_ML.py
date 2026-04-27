@@ -409,7 +409,6 @@ with tab2:
         anos_disponiveis,
         index=anos_disponiveis.index(ano_max)
     )
-
     df_ano = df_matricula[df_matricula['ANO'] == ano_sel]
 
     # UNIDADE
@@ -420,7 +419,7 @@ with tab2:
 
     df_unidade = df_ano[df_ano['UNIDADE'] == unidade_sel]
 
-    # CURSO (COM GLOBAL)
+    # CURSO
     lista_cursos = sorted(df_unidade['CURSO'].unique())
     curso_sel = st.sidebar.selectbox(
         "CURSO",
@@ -515,6 +514,7 @@ with tab2:
         df_contexto_historico = (
             df_matricula[
                 (df_matricula['UNIDADE'] == unidade_sel) &
+                (df_matricula['ANO'].isin(ano_sel)) &
                 ((curso_sel == 'GLOBAL') | (df_matricula['CURSO'] == curso_sel))
             ]
             .sort_values('ANO')
