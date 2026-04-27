@@ -401,17 +401,6 @@ with tab2:
     st.sidebar.header("🎯 Contexto da Análise")
 
     # ANO
-    # ano_max = int(df_matricula['ANO'].max())
-    # anos_disponiveis = sorted(df_matricula['ANO'].unique())
-
-    # ano_sel = st.sidebar.selectbox(
-    #     "ANO",
-    #     anos_disponiveis,
-    #     index=anos_disponiveis.index(ano_max)
-    # )
-    # df_ano = df_matricula[df_matricula['ANO'] == ano_sel]
-
-    # ANO (COM OPÇÃO TODOS)
     ano_max = int(df_matricula['ANO'].max())
     anos_disponiveis = sorted(df_matricula['ANO'].unique())
 
@@ -420,15 +409,11 @@ with tab2:
     ano_sel = st.sidebar.selectbox(
         "ANO",
         opcoes_ano,
-        index=opcoes_ano.index(ano_max)
-    )
-    # ANO PARA O MODELO (NUNCA É TODOS)
-    if ano_sel == 'TODOS':
-        ano_modelo = ano_max
-    else:
-        ano_modelo = ano_sel
-    df_ano = df_matricula[df_matricula['ANO'] == ano_modelo]
-    
+        index=0)
+
+    ano_modelo = ano_max if ano_sel == 'TODOS' else ano_sel
+    df_ano = df_matricula if ano_sel == 'TODOS' else df_matricula[df_matricula['ANO'] == ano_sel]
+
     # UNIDADE
     unidade_sel = st.sidebar.selectbox(
         "UNIDADE",
@@ -449,15 +434,36 @@ with tab2:
         df_curso = df_unidade[df_unidade['CURSO'] == curso_sel]
 
     # ==========================================================
-    # LINHA REPRESENTATIVA (MESMA BASE DA TABELA)
+    # LINHA REPRESENTATIVA
     # ==========================================================
 
     if curso_sel == 'GLOBAL':
-        linha_real = (df_matricula[(df_matricula['UNIDADE'] == unidade_sel)].sort_values(['ANO','CURSO']).iloc[-1].copy(deep=True))
+        df_base_real = df_matricula[
+            (df_matricula['UNIDADE'] == unidade_sel)
+        ]
     else:
-        linha_real = (df_matricula[
-                (df_matricula['UNIDADE'] == unidade_sel) &
-                (df_matricula['CURSO'] == curso_sel)].sort_values(['ANO','CURSO']).iloc[-1].copy(deep=True))
+        df_base_real = df_matricula[
+            (df_matricula['UNIDADE'] == unidade_sel) &
+            (df_matricula['CURSO'] == curso_sel)
+        ]
+
+    if df_base_real.empty:
+        st.error(
+            "Não há dados disponíveis para a combinação selecionada "
+            "(UNIDADE / CURSO)."
+        )
+        st.stop()
+
+    ultimo_ano_disponivel = df_base_real['ANO'].max()
+
+    linha_real = (
+        df_base_real[
+            df_base_real['ANO'] == ultimo_ano_disponivel
+        ]
+        .sort_values('CURSO')
+        .iloc[-1]
+        .copy(deep=True)
+    )
 
     # ---------- PROBABILIDADE REAL ----------
     probs_real = modelo.predict_proba(build_X(linha_real))[0]
@@ -490,7 +496,7 @@ with tab2:
             st.plotly_chart(
                 grafico_real_barras_horizontais(
                     probs_atual=probs_real,
-                    ano_atual=ano_sel
+                    ano_atual=ano_modelo
                 ),
                 use_container_width=True
             )
@@ -529,14 +535,20 @@ with tab2:
         # ---------- TABELA HISTÓRICA ----------
         st.subheader("📋 Contexto do Município Selecionado")
 
-        df_contexto_historico = (
-            df_matricula[
+        # ---------- TABELA HISTÓRICA ----------
+        if ano_sel == 'TODOS':
+            df_contexto_historico = df_matricula[
+                (df_matricula['UNIDADE'] == unidade_sel) &
+                ((curso_sel == 'GLOBAL') | (df_matricula['CURSO'] == curso_sel))
+            ]
+        else:
+            df_contexto_historico = df_matricula[
                 (df_matricula['UNIDADE'] == unidade_sel) &
                 (df_matricula['ANO'] == ano_sel) &
                 ((curso_sel == 'GLOBAL') | (df_matricula['CURSO'] == curso_sel))
             ]
-            .sort_values('ANO')
-        )
+
+        df_contexto_historico = df_contexto_historico.sort_values('ANO')
         df_contexto_historico['SALARIO_MEDIO'] = round(df_contexto_historico['SALARIO_MEDIO'], 2)
         df_contexto_historico = df_contexto_historico[[ 'ANO', 'UNIDADE', 'CURSO', 'FAIXA_MAT', 'MAT_PAG', 'QTD_CONC', 'QTD_EMPRESAS', 'SALDO_EMPREGO','SALARIO_MEDIO' ]]
         df_contexto_historico = df_contexto_historico.rename(columns=labels_exibicao)
