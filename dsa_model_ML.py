@@ -401,16 +401,34 @@ with tab2:
     st.sidebar.header("🎯 Contexto da Análise")
 
     # ANO
+    # ano_max = int(df_matricula['ANO'].max())
+    # anos_disponiveis = sorted(df_matricula['ANO'].unique())
+
+    # ano_sel = st.sidebar.selectbox(
+    #     "ANO",
+    #     anos_disponiveis,
+    #     index=anos_disponiveis.index(ano_max)
+    # )
+    # df_ano = df_matricula[df_matricula['ANO'] == ano_sel]
+
+    # ANO (COM OPÇÃO TODOS)
     ano_max = int(df_matricula['ANO'].max())
     anos_disponiveis = sorted(df_matricula['ANO'].unique())
 
+    opcoes_ano = ['TODOS'] + anos_disponiveis
+
     ano_sel = st.sidebar.selectbox(
         "ANO",
-        anos_disponiveis,
-        index=anos_disponiveis.index(ano_max)
+        opcoes_ano,
+        index=opcoes_ano.index(ano_max)
     )
-    df_ano = df_matricula[df_matricula['ANO'] == ano_sel]
-
+    # ANO PARA O MODELO (NUNCA É TODOS)
+    if ano_sel == 'TODOS':
+        ano_modelo = ano_max
+    else:
+        ano_modelo = ano_sel
+    df_ano = df_matricula[df_matricula['ANO'] == ano_modelo]
+    
     # UNIDADE
     unidade_sel = st.sidebar.selectbox(
         "UNIDADE",
