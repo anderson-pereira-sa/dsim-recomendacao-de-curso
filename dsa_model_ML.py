@@ -790,32 +790,16 @@ with tab2:
         ano_futuro=2026,
         cenario="otimista"
     )
-
    
     # ==========================================================
     # FILTRA PARA A UNIDADE SELECIONADA
     # ==========================================================
-    # df_recom_unidade = df_planejamento_2026[df_planejamento_2026['UNIDADE'] == unidade_sel].copy()
-
-    df_base_u = df_base_2026[df_base_2026['UNIDADE'] == unidade_sel]
-    df_cons_u = df_conservador_2026[df_conservador_2026['UNIDADE'] == unidade_sel]
-    df_oti_u  = df_otimista_2026[df_otimista_2026['UNIDADE'] == unidade_sel]
-
-    df_base_u = df_base_u[['CURSO', 'col_recom']].rename(
-    columns={'col_recom': 'Base'}
+    # 1️⃣ Filtros (ANTES DE TUDO)
+    unidades_sel = st.multiselect(
+        "Unidades para Recomendações (CHP)",
+        sorted(df_matricula['UNIDADE'].unique()),
+        default=[unidade_sel]
     )
-
-    df_cons_u = df_cons_u[['CURSO', 'col_recom']].rename(
-        columns={'col_recom': 'Conservador'}
-    )
-
-    df_oti_u = df_oti_u[['CURSO', 'col_recom']].rename(
-        columns={'col_recom': 'Otimista'}
-    )
-
-    df_recom_unidade = (df_base_u.merge(df_cons_u, on='CURSO', how='left'
-                                        ).merge(df_oti_u, on='CURSO', how='left'
-                                                ).merge(df_simulado_2026, on=['CURSO'], how='left'))
 
     cenarios_sel = st.multiselect(
         "Cenários para comparação",
@@ -823,32 +807,30 @@ with tab2:
         default=['Base', 'Otimista', 'Simulado']
     )
 
-    colunas_finais = ['Curso Técnico']
-
-    if 'Base' in cenarios_sel:
-        colunas_finais.append('Recomendação – Base')
-    if 'Conservador' in cenarios_sel:
-        colunas_finais.append('Recomendação – Conservador')
-    if 'Otimista' in cenarios_sel:
-        colunas_finais.append('Recomendação – Otimista')
-    if 'Simulado' in cenarios_sel:
-        colunas_finais.append('Recomendação – Simulado')
-
-    df_recom_unidade = df_recom_unidade[colunas_finais]
-
-    unidades_sel = st.multiselect(
-        "UNIDADE",
-        sorted(df_matricula['UNIDADE'].unique()),
-        default=[unidade_sel]
-    )
-
+    # 2️⃣ Filtra cenários por UNIDADE
     df_base_u = df_base_2026[df_base_2026['UNIDADE'].isin(unidades_sel)]
     df_cons_u = df_conservador_2026[df_conservador_2026['UNIDADE'].isin(unidades_sel)]
     df_oti_u  = df_otimista_2026[df_otimista_2026['UNIDADE'].isin(unidades_sel)]
 
-    # ==========================================================
-    # ORGANIZA COLUNAS PARA EXIBIÇÃO
-    # ==========================================================
+    # 3️⃣ Consolida por CURSO
+    df_base_u = df_base_u.groupby('CURSO', as_index=False).first()
+    df_cons_u = df_cons_u.groupby('CURSO', as_index=False).first()
+    df_oti_u  = df_oti_u.groupby('CURSO', as_index=False).first()
+
+    # 4️⃣ Seleciona colunas e renomeia
+    df_base_u = df_base_u[['CURSO', 'col_recom']].rename(columns={'col_recom': 'Base'})
+    df_cons_u = df_cons_u[['CURSO', 'col_recom']].rename(columns={'col_recom': 'Conservador'})
+    df_oti_u  = df_oti_u[['CURSO', 'col_recom']].rename(columns={'col_recom': 'Otimista'})
+
+    # 5️⃣ Merge final
+    df_recom_unidade = (
+        df_base_u
+        .merge(df_cons_u, on='CURSO', how='left')
+        .merge(df_oti_u, on='CURSO', how='left')
+        .merge(df_simulado_2026, on='CURSO', how='left')
+    )
+
+    # 6️⃣ Renomeia para exibição
     df_recom_unidade = df_recom_unidade.rename(columns={
         'CURSO': 'Curso Técnico',
         'Base': 'Base',
@@ -856,6 +838,15 @@ with tab2:
         'Otimista': 'Otimista',
         'RECOM_SIMULADO': 'Simulado'
     })
+
+    # 7️⃣ Aplica filtro de cenários
+    colunas_finais = ['Curso Técnico']
+    for c in cenarios_sel:
+        if c in df_recom_unidade.columns:
+            colunas_finais.append(c)
+
+    df_recom_unidade = df_recom_unidade[colunas_finais]
+
     if 'UNIDADE' in df_recom_unidade.columns:
         df_recom_unidade = df_recom_unidade.drop(columns=['UNIDADE'])
 
@@ -877,6 +868,14 @@ with tab2:
         - 🔴 **Não priorizar** – Faixa *Abaixo de 21*
         - ⚠️ **Analisar manualmente** – Cenário indefinido ou instável
         """)
+    
+
+    df_base_u = df_base_u.groupby('CURSO', as_index=False).first()
+    df_cons_u = df_cons_u.groupby('CURSO', as_index=False).first()
+    df_oti_u  = df_oti_u.groupby('CURSO', as_index=False).first()
+
+    if 'UNIDADE' in df_recom_unidade.columns:
+        df_recom_unidade = df_recom_unidade.drop(columns=['UNIDADE'])
     st.dataframe(df_recom_unidade, use_container_width=True, hide_index=True)
 
     # ---------- RODAPÉ ----------
