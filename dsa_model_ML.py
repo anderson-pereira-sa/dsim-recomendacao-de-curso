@@ -362,13 +362,13 @@ def gerar_cenario_futuro(linha_base, ano_futuro, cenario="base"):
 
     elif cenario == "otimista":
         linha['SALDO_EMPREGO'] *= 1.10
-        linha['QTD_CONC'] *= 1.00
+        linha['QTD_CONC'] *= 0.95
         linha['SALARIO_MEDIO'] *= 1.05
         linha['VLR_MEDIO_BENEFICIO'] *= 1.03
 
     else:  # cenário base
-        linha['SALDO_EMPREGO'] *= 1.05
-        linha['QTD_CONC'] *= 1.02
+        linha['SALDO_EMPREGO'] *= 0.95
+        linha['QTD_CONC'] *= 1.05
         linha['SALARIO_MEDIO'] *= 1.03
         linha['VLR_MEDIO_BENEFICIO'] *= 1.02
 
@@ -685,21 +685,87 @@ with tab2:
             st.info(texto_exec)
 
     st.divider()
-# with col_recom:
     st.subheader("📜 Recomendações de Cursos – CHP")
 
     # ==========================================================
-    # GERA MATRIZ FUTURA CURSO × UNIDADE
+    # CENÁRIO SIMULADO (DERIVADO DO SIMULADOR)
     # ==========================================================
-    df_planejamento_2026 = gerar_matriz_curso_unidade_futuro(
+
+    resultados_simulados = []
+
+    for curso in df_matricula['CURSO'].unique():
+
+    # usa o mesmo contexto da unidade, muda apenas o curso
+    linha_simulada = linha_sim.copy(deep=True)
+    linha_simulada['CURSO'] = curso
+    linha_simulada['ANO'] = 2026
+
+    X = build_X(linha_simulada)
+    probs = modelo.predict_proba(X)[0]
+
+    faixa_idx = int(np.argmax(probs))
+    faixa_nome = FAIXAS[faixa_idx]
+    prob_max = float(np.max(probs))
+
+    recomendacao = gerar_recomendacao(
+        faixa_dominante=faixa_nome,
+        prob_max=prob_max
+    )
+
+    resultados_simulados.append({
+        'UNIDADE': unidade_sel,
+        'CURSO': curso,
+        'RECOM_SIMULADO': recomendacao
+    })
+
+    df_simulado_2026 = pd.DataFrame(resultados_simulados)
+
+    # ==========================================================
+    # GERA MATRIZES FUTURAS POR CENÁRIO
+    # ==========================================================
+
+    df_base_2026 = gerar_matriz_curso_unidade_futuro(
         df_historico=df_matricula,
         ano_futuro=2026,
-        cenario="base")
+        cenario="base"
+    )
+
+    df_conservador_2026 = gerar_matriz_curso_unidade_futuro(
+        df_historico=df_matricula,
+        ano_futuro=2026,
+        cenario="conservador"
+    )
+
+    df_otimista_2026 = gerar_matriz_curso_unidade_futuro(
+        df_historico=df_matricula,
+        ano_futuro=2026,
+        cenario="otimista"
+    )
 
     # ==========================================================
     # FILTRA PARA A UNIDADE SELECIONADA
     # ==========================================================
-    df_recom_unidade = df_planejamento_2026[df_planejamento_2026['UNIDADE'] == unidade_sel].copy()
+    # df_recom_unidade = df_planejamento_2026[df_planejamento_2026['UNIDADE'] == unidade_sel].copy()
+
+    df_base_u = df_base_2026[df_base_2026['UNIDADE'] == unidade_sel]
+    df_cons_u = df_conservador_2026[df_conservador_2026['UNIDADE'] == unidade_sel]
+    df_oti_u  = df_otimista_2026[df_otimista_2026['UNIDADE'] == unidade_sel]
+
+    df_base_u = df_base_u[['CURSO', 'col_recom']].rename(
+    columns={'col_recom': 'Base'}
+    )
+
+    df_cons_u = df_cons_u[['CURSO', 'col_recom']].rename(
+        columns={'col_recom': 'Conservador'}
+    )
+
+    df_oti_u = df_oti_u[['CURSO', 'col_recom']].rename(
+        columns={'col_recom': 'Otimista'}
+    )
+
+    df_recom_unidade = (df_base_u.merge(df_cons_u, on='CURSO', how='left'
+                                        ).merge(df_oti_u, on='CURSO', how='left'
+                                                ).merge(df_simulado_2026, on=['CURSO'], how='left'))
 
     # ==========================================================
     # ORGANIZA COLUNAS PARA EXIBIÇÃO
@@ -712,13 +778,13 @@ with tab2:
             'FAIXA_DOMINANTE']]
 
     # Ajustes visuais
-    df_recom_unidade['PROB_MAX'] = (df_recom_unidade['PROB_MAX'] * 100).round(1)
-
     df_recom_unidade = df_recom_unidade.rename(columns={
         'CURSO': 'Curso Técnico',
-        'col_recom': 'Recomendação',
-        'PROB_MAX': 'Probabilidade (%)',
-        'FAIXA_DOMINANTE': 'Faixa de Matrícula'})
+        'Base': 'Recomendação – Base',
+        'Conservador': 'Recomendação – Conservador',
+        'Otimista': 'Recomendação – Otimista',
+        'RECOM_SIMULADO': 'Recomendação – Simulado'
+    })
 
     # ==========================================================
     # ORDENA: melhores recomendações primeiro
