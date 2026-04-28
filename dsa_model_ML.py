@@ -12,8 +12,7 @@ from xgboost import XGBClassifier
 st.set_page_config(
     page_title="Inteligência de Mercado",
     page_icon="📊",
-    layout="wide"
-)
+    layout="wide")
 
 st.title("Modelo Recomendação de Curso")
 st.caption("Machine Learning aplicado à análise de risco e oportunidade em matrículas")
@@ -39,6 +38,7 @@ labels_exibicao = {
     # 'QTD_VINCULOS': 'VÍNCULOS (RAIS)',
     'SALARIO_MEDIO': 'SALÁRIO MÉDIO (CAGED)',
     'SALDO_EMPREGO': 'SALDO EMPREGO (CAGED)',
+    'VLR_MEDIO_BENEFICIO': 'VALOR MÉDIO BOLSA FAMÍLIA',
     'MAT_PAG': 'MATR.(SENAI)',
     'FAIXA_MAT': 'FAIXA DE MATR. (SENAI)'
 }
@@ -90,14 +90,13 @@ def build_X(row):
     return np.hstack([X_num, X_cat]).astype(float)
 
 
-def impacto_variaveis_locais(linha_real, linha_sim, faixa_idx, delta_padrao=0.10, epsilon=1.0):
+def impacto_variaveis_locais(linha_real,linha_sim, faixa_idx, delta_padrao=0.10, epsilon=1.0):
     impactos = {}
 
     X_base = build_X(linha_sim)
     prob_base = modelo.predict_proba(X_base)[0][faixa_idx]
 
     for var in numericas_ohencoder:
-
         if var not in linha_sim.index:
             continue
 
@@ -111,42 +110,12 @@ def impacto_variaveis_locais(linha_real, linha_sim, faixa_idx, delta_padrao=0.10
 
         X_temp = build_X(linha_temp)
         prob_temp = modelo.predict_proba(X_temp)[0][faixa_idx]
-
         impactos[var] = prob_temp - prob_base
 
     return impactos
 
-def probabilidades_por_ano(df_base, unidade, curso):
-    resultados = []
-
-    df_base_contexto = (
-        df_base[(df_base['UNIDADE'] == unidade) &
-                ((curso == 'GLOBAL') | (df_base['CURSO'] == curso))].sort_values('ANO'))
-
-    if df_base_contexto.empty:
-        return pd.DataFrame(columns=['ANO', *FAIXAS])
-
-    linha_base = df_base_contexto.iloc[-1].copy(deep=True)
-    for ano in sorted(df_base['ANO'].unique()):
-        linha_temp = linha_base.copy(deep=True)
-        linha_temp['ANO'] = ano
-
-        probs = modelo.predict_proba(build_X(linha_temp))[0]
-
-        linha_resultado = {'ANO': ano}
-        for faixa, p in zip(FAIXAS, probs):
-            linha_resultado[faixa] = p
-
-        resultados.append(linha_resultado)
-
-    return pd.DataFrame(resultados)
-
 def grafico_real_barras_horizontais(probs_atual, ano_atual):
-    df_bar = pd.DataFrame({
-        "Faixa": FAIXAS,
-        "Probabilidade": probs_atual
-    })
-
+    df_bar = pd.DataFrame({"Faixa": FAIXAS, "Probabilidade": probs_atual})
     cores = {
         FAIXAS[0]: "#1D3691",  # Abaixo de 21 matrículas
         FAIXAS[1]: "#795821",  # Entre 21 e 40
@@ -163,7 +132,7 @@ def grafico_real_barras_horizontais(probs_atual, ano_atual):
             text=[f"{p*100:.1f}%" for p in df_bar["Probabilidade"]],
             textposition="auto",
             textfont=dict(
-                size=18        # ✅ AQUI você controla o tamanho
+                size=18
                 # color="black"   # ✅ Garante contraste executivo
             )))
 
@@ -231,9 +200,7 @@ def grafico_real_linhas(df_series):
                     width=3,
                     shape="spline"  # ✅ suavização visual
                 ),
-                marker=dict(size=6)
-            )
-        )
+                marker=dict(size=6)))
 
     fig.update_layout(
         title="Evolução Histórica das Probabilidades por Faixa",
@@ -402,69 +369,67 @@ with tab2:
 
     # ANO
     ano_max = int(df_matricula['ANO'].max())
-    anos_disponiveis = sorted(df_matricula['ANO'].unique())
-
-    opcoes_ano = ['TODOS'] + anos_disponiveis
+    # anos_disponiveis = sorted(df_matricula['ANO'].unique())
+    # opcoes_ano = ['TODOS'] + anos_disponiveis
+    # ano_sel = st.sidebar.selectbox(
+    #     "ANO "
+    #     "(Apenas para o Contexto Histórico)",
+    #     opcoes_ano,
+    #     index=0)
 
     ano_sel = st.sidebar.selectbox(
         "ANO "
-        "(Apenas para o Contexto Histórico)",
-        opcoes_ano,
-        index=0)
+        "(Apenas para o Contexto Histórico)", 
+        ['TODOS'] + sorted(df_matricula['ANO'].unique()))
 
     ano_modelo = ano_max if ano_sel == 'TODOS' else ano_sel
     df_ano = df_matricula if ano_sel == 'TODOS' else df_matricula[df_matricula['ANO'] == ano_sel]
 
     # UNIDADE
-    unidade_sel = st.sidebar.selectbox(
-        "UNIDADE",
-        sorted(df_ano['UNIDADE'].unique())
-    )
-
+    unidade_sel = st.sidebar.selectbox("UNIDADE", sorted(df_ano['UNIDADE'].unique()))
     df_unidade = df_ano[df_ano['UNIDADE'] == unidade_sel]
 
     # CURSO
-    lista_cursos = sorted(df_unidade['CURSO'].unique())
-    curso_sel = st.sidebar.selectbox(
-        "CURSO",
-        ['GLOBAL'] + lista_cursos)
+    curso_sel = st.sidebar.selectbox("CURSO", ['GLOBAL'] + sorted(df_unidade['CURSO'].unique()))
 
-    if curso_sel == 'GLOBAL':
-        df_curso = df_unidade.copy(deep=True)
-    else:
-        df_curso = df_unidade[df_unidade['CURSO'] == curso_sel]
+    df_base = (
+        df_matricula[df_matricula['UNIDADE'] == unidade_sel]
+        if curso_sel == 'GLOBAL'
+        else df_matricula[(df_matricula['UNIDADE'] == unidade_sel) & (df_matricula['CURSO'] == curso_sel)]
+    )
 
+    linha_real = df_base[df_base['ANO'] == df_base['ANO'].max()].iloc[-1].copy()
     # ==========================================================
     # LINHA REPRESENTATIVA
     # ==========================================================
 
-    if curso_sel == 'GLOBAL':
-        df_base_real = df_matricula[
-            (df_matricula['UNIDADE'] == unidade_sel)
-        ]
-    else:
-        df_base_real = df_matricula[
-            (df_matricula['UNIDADE'] == unidade_sel) &
-            (df_matricula['CURSO'] == curso_sel)
-        ]
+    # if curso_sel == 'GLOBAL':
+    #     df_base_real = df_matricula[
+    #         (df_matricula['UNIDADE'] == unidade_sel)
+    #     ]
+    # else:
+    #     df_base_real = df_matricula[
+    #         (df_matricula['UNIDADE'] == unidade_sel) &
+    #         (df_matricula['CURSO'] == curso_sel)
+    #     ]
 
-    if df_base_real.empty:
-        st.error(
-            "Não há dados disponíveis para a combinação selecionada "
-            "(UNIDADE / CURSO)."
-        )
-        st.stop()
+    # if df_base_real.empty:
+    #     st.error(
+    #         "Não há dados disponíveis para a combinação selecionada "
+    #         "(UNIDADE / CURSO)."
+    #     )
+    #     st.stop()
 
-    ultimo_ano_disponivel = df_base_real['ANO'].max()
+    # ultimo_ano_disponivel = df_base_real['ANO'].max()
 
-    linha_real = (
-        df_base_real[
-            df_base_real['ANO'] == ultimo_ano_disponivel
-        ]
-        .sort_values('CURSO')
-        .iloc[-1]
-        .copy(deep=True)
-    )
+    # linha_real = (
+    #     df_base_real[
+    #         df_base_real['ANO'] == ultimo_ano_disponivel
+    #     ]
+    #     .sort_values('CURSO')
+    #     .iloc[-1]
+    #     .copy(deep=True)
+    # )
 
     # ---------- PROBABILIDADE REAL ----------
     probs_real = modelo.predict_proba(build_X(linha_real))[0]
@@ -478,7 +443,6 @@ with tab2:
         linha_sim=linha_real, 
         faixa_idx=faixa_idx_real
     )
-
 
     # ==========================================================
     # LAYOUT: REAL | DIVISOR | SIMULADO
@@ -528,10 +492,7 @@ with tab2:
             # municipio=municipio_sel
         )
 
-        st.plotly_chart(
-            grafico_real_linhas(df_series),
-            use_container_width=True
-        )
+        st.plotly_chart(grafico_real_linhas(df_series), use_container_width=True)
 
         # ---------- TABELA HISTÓRICA ----------
         st.subheader("📋 Contexto do Município Selecionado")
@@ -577,6 +538,7 @@ with tab2:
         with c1:
             conc_sim = st.number_input(labels_exibicao['QTD_CONC'], value=int(linha_real['QTD_CONC']))
             emp_sim = st.number_input(labels_exibicao['QTD_EMPRESAS'], value=int(linha_real['QTD_EMPRESAS']))
+            bf_sim = st.number_input(labels_exibicao['VLR_MEDIO_BENEFICIO'], value=float(linha_real['VLR_MEDIO_BENEFICIO']))
 
         # with c2:
             # matc_sim = st.number_input(labels_exibicao['QTD_MAT_CONC'], value=int(linha_real['QTD_MAT_CONC']))
@@ -590,6 +552,7 @@ with tab2:
         valores_simulados = {
             'QTD_EMPRESAS': emp_sim,
             # 'QTD_VINCULOS': vinc_sim,
+            'VLR_MEDIO_BENEFICIO': bf_sim,
             'QTD_CONC': conc_sim,
             'SALARIO_MEDIO': sal_sim,
             'SALDO_EMPREGO': saldo_sim
@@ -598,17 +561,13 @@ with tab2:
         for col, val in valores_simulados.items():
             linha_sim[col] = val
 
-
         probs_sim = modelo.predict_proba(build_X(linha_sim))[0]
 
         faixa_idx = int(np.argmax(probs_sim))
         faixa_nome = FAIXAS[faixa_idx]
 
         impactos = impacto_variaveis_locais(linha_real, linha_sim, faixa_idx)
-        texto_exec, _ = analise_executiva_cenario_simulado(
-            faixa_simulada=faixa_nome,
-            impactos_dict=impactos)
-
+        texto_exec, _ = analise_executiva_cenario_simulado(faixa_simulada=faixa_nome, impactos_dict=impactos)
 
         st.plotly_chart(pizza_sim(probs_sim, "Distribuição SIMULADA"), True)
 

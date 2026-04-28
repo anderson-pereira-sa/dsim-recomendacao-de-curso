@@ -13,8 +13,9 @@ from xgboost import XGBClassifier
 
 dataset_0 = pickle.load(open('dataset.pkl', 'rb'))
 
-categoricas_ohencoder = ['ANO','UNIDADE', 'CURSO']
+categoricas_ohencoder = ['UNIDADE', 'CURSO']
 numericas_ohencoder = [
+    'ANO',
     'QTD_EMPRESAS',
     'QTD_CONC',
     'SALARIO_MEDIO',
