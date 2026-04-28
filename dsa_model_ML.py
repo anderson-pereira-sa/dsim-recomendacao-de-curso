@@ -529,7 +529,7 @@ with tab2:
     # LAYOUT: REAL | DIVISOR | SIMULADO
     # ==========================================================
 
-    col_real, col_div, col_sim , col_recom = st.columns([1.8, 0.05, 1.2])
+    col_real, col_div, col_sim , col_recom = st.columns([1.8, 0.05, 1.2, 1.4])
 
     # ---------- REAL ----------
     with col_real:
