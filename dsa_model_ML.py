@@ -212,24 +212,34 @@ def grafico_real_linhas(df_series):
 
     return fig
 
-def analise_executiva_prob_real(faixa_dominante,prob_dominante,impactos_dict,limite_otimo=0.80,limite_relevante_pp=1.0):
+def analise_executiva_prob_real(
+    faixa_dominante,
+    prob_dominante,
+    impactos_dict,
+    limite_otimo=0.80,
+    limite_relevante_pp=1.0
+):
     impactos = pd.Series(impactos_dict).sort_values(key=abs, ascending=False)
     impactos_neg = impactos[impactos < -limite_relevante_pp / 100]
 
     def nomes(vars):
         return [labels_exibicao.get(v, v) for v in vars]
 
+    prob_pct = prob_dominante * 100
+
     # ======================================================
     # FAIXA BAIXA
     # ======================================================
     if faixa_dominante == "Abaixo de 21 matrículas":
         texto = (
-            "O cenário atual indica **baixa demanda**, com maior probabilidade "
-            "concentrada na faixa **abaixo de 21 matrículas matrículas**. "
-            "Esse patamar reflete um **contexto desfavorável**, que tende a se manter "
-            "caso não haja mudanças estruturais. "
+            f"O cenário atual apresenta **baixa demanda**, com "
+            f"**{prob_pct:.1f}%** de probabilidade concentrada na faixa "
+            f"**abaixo de 21 matrículas**. "
+            "Esse patamar indica um **contexto desfavorável**, que tende a se manter "
+            "na ausência de mudanças estruturais. "
             "A recomendação é utilizar o **simulador** para avaliar quais variáveis "
-            "podem contribuir para a reversão desse cenário.")
+            "podem contribuir para a reversão desse cenário."
+        )
         return texto, "warning"
 
     # ======================================================
@@ -237,11 +247,13 @@ def analise_executiva_prob_real(faixa_dominante,prob_dominante,impactos_dict,lim
     # ======================================================
     if faixa_dominante == "Entre 21 e 40":
         texto = (
-            "O cenário atual apresenta **demanda intermediária**, com maior "
-            "probabilidade na faixa **entre 21 e 40 matrículas**. "
-            "Esse patamar indica **equilíbrio**, mas ainda com espaço para evolução. "
-            "A recomendação é monitorar os fatores de mercado e avaliar, via simulador, "
-            "quais ajustes podem sustentar o avanço para a faixa superior.")
+            f"O cenário atual indica **demanda intermediária**, com "
+            f"**{prob_pct:.1f}%** de probabilidade na faixa "
+            f"**entre 21 e 40 matrículas**. "
+            "Esse resultado sugere **equilíbrio**, ainda com espaço para evolução. "
+            "A recomendação é monitorar os fatores de mercado e, se necessário, "
+            "avaliar ajustes por meio do **simulador**."
+        )
         return texto, "info"
 
     # ======================================================
@@ -251,27 +263,35 @@ def analise_executiva_prob_real(faixa_dominante,prob_dominante,impactos_dict,lim
 
         if not impactos_neg.empty:
             texto = (
-                "Estamos em um **cenário excelente de demanda**, com elevada probabilidade "
-                "de permanência na faixa **acima de 40 matrículas**. "
-                "No entanto, o modelo indica que **movimentos adicionais no mercado**, "
-                f"especialmente relacionados a **{', '.join(nomes(impactos_neg.index[:2]))}**, "
-                "podem **deslocar parte da demanda**, reduzindo marginalmente "
-                "a probabilidade de matrícula muito elevada. "
-                "A recomendação é **manter a estratégia atual** e **monitorar o mercado**.")
+                f"O cenário atual é **altamente favorável**, com "
+                f"**{prob_pct:.1f}%** de probabilidade na faixa "
+                f"**acima de 40 matrículas**. "
+                "O modelo indica, contudo, que variáveis como "
+                f"**{', '.join(nomes(impactos_neg.index[:2]))}** "
+                "representam **fatores de atenção**, pois podem provocar "
+                "deslocamentos marginais do perfil de demanda. "
+                "A recomendação é **manter a estratégia atual** e "
+                "**monitorar a evolução desses indicadores**."
+            )
         else:
             texto = (
-                "O cenário atual é **altamente favorável**, com elevada probabilidade "
-                "de permanência na faixa **acima de 40 matrículas**. "
+                f"O cenário atual é **altamente favorável**, com "
+                f"**{prob_pct:.1f}%** de probabilidade na faixa "
+                f"**acima de 40 matrículas**. "
                 "Não há sinais relevantes de risco no curto prazo. "
-                "A recomendação é **manter a estratégia vigente**.")
+                "A recomendação é **manter a estratégia vigente**."
+            )
 
         return texto, "success"
 
+    # ======================================================
+    # FALLBACK
+    # ======================================================
     return (
         "O cenário atual apresenta comportamento equilibrado. "
         "Recomenda-se acompanhamento contínuo.",
-        "info")
-
+        "info"
+    )
 
 
 def analise_executiva_cenario_simulado(faixa_simulada,impactos_dict,limite_relevante_pp=1.0):
