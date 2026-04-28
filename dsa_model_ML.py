@@ -786,26 +786,18 @@ with tab2:
     # ==========================================================
     # ORGANIZA COLUNAS PARA EXIBIÇÃO
     # ==========================================================
-    df_recom_unidade = df_recom_unidade[
-        [
-            'CURSO',
-            'col_recom',
-            'PROB_MAX',
-            'FAIXA_DOMINANTE']]
-
-    # Ajustes visuais
     df_recom_unidade = df_recom_unidade.rename(columns={
         'CURSO': 'Curso Técnico',
-        'Base': 'Recomendação – Base',
-        'Conservador': 'Recomendação – Conservador',
-        'Otimista': 'Recomendação – Otimista',
-        'RECOM_SIMULADO': 'Recomendação – Simulado'
+        'Base': 'Base',
+        'Conservador': 'Conservador',
+        'Otimista': 'Otimista',
+        'RECOM_SIMULADO': 'Simulado'
     })
 
     # ==========================================================
     # ORDENA: melhores recomendações primeiro
     # ==========================================================
-    df_recom_unidade = df_recom_unidade.sort_values(by='Probabilidade (%)',ascending=False)
+    df_recom_unidade = df_recom_unidade.sort_values(by='Curso Técnico',ascending=False)
 
     # ==========================================================
     # EXIBE TABELA
