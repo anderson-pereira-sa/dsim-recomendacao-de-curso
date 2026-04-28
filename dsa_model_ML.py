@@ -198,8 +198,7 @@ def grafico_real_linhas(df_series):
                 line=dict(
                     color=cores[faixa],
                     width=3,
-                    shape="spline"  # ✅ suavização visual
-                ),
+                    shape="spline"),  # ✅ suavização visual
                 marker=dict(size=6)))
 
     fig.update_layout(
@@ -209,8 +208,7 @@ def grafico_real_linhas(df_series):
         yaxis_tickformat=".0%",
         template="plotly_white",
         height=360,
-        legend_title_text="Faixa de Matrícula"
-    )
+        legend_title_text="Faixa de Matrícula")
 
     return fig
 
@@ -231,8 +229,7 @@ def analise_executiva_prob_real(faixa_dominante,prob_dominante,impactos_dict,lim
             "Esse patamar reflete um **contexto desfavorável**, que tende a se manter "
             "caso não haja mudanças estruturais. "
             "A recomendação é utilizar o **simulador** para avaliar quais variáveis "
-            "podem contribuir para a reversão desse cenário."
-        )
+            "podem contribuir para a reversão desse cenário.")
         return texto, "warning"
 
     # ======================================================
@@ -244,8 +241,7 @@ def analise_executiva_prob_real(faixa_dominante,prob_dominante,impactos_dict,lim
             "probabilidade na faixa **entre 21 e 40 matrículas**. "
             "Esse patamar indica **equilíbrio**, mas ainda com espaço para evolução. "
             "A recomendação é monitorar os fatores de mercado e avaliar, via simulador, "
-            "quais ajustes podem sustentar o avanço para a faixa superior."
-        )
+            "quais ajustes podem sustentar o avanço para a faixa superior.")
         return texto, "info"
 
     # ======================================================
@@ -261,23 +257,20 @@ def analise_executiva_prob_real(faixa_dominante,prob_dominante,impactos_dict,lim
                 f"especialmente relacionados a **{', '.join(nomes(impactos_neg.index[:2]))}**, "
                 "podem **deslocar parte da demanda**, reduzindo marginalmente "
                 "a probabilidade de matrícula muito elevada. "
-                "A recomendação é **manter a estratégia atual** e **monitorar o mercado**."
-            )
+                "A recomendação é **manter a estratégia atual** e **monitorar o mercado**.")
         else:
             texto = (
                 "O cenário atual é **altamente favorável**, com elevada probabilidade "
                 "de permanência na faixa **acima de 40 matrículas**. "
                 "Não há sinais relevantes de risco no curto prazo. "
-                "A recomendação é **manter a estratégia vigente**."
-            )
+                "A recomendação é **manter a estratégia vigente**.")
 
         return texto, "success"
 
     return (
         "O cenário atual apresenta comportamento equilibrado. "
         "Recomenda-se acompanhamento contínuo.",
-        "info"
-    )
+        "info")
 
 
 
@@ -292,17 +285,14 @@ def analise_executiva_cenario_simulado(faixa_simulada,impactos_dict,limite_relev
         return (
             "As alterações realizadas não provocaram mudanças relevantes "
             "no cenário projetado. O perfil de demanda permanece estável.",
-            "info"
-        )
+            "info")
 
     texto = (
         f"No cenário simulado, a faixa dominante passa a ser "
         f"**{faixa_simulada}**. "
         "O modelo indica que as mudanças realizadas afetam principalmente "
         f"**{', '.join(nomes(impactos_relevantes.index[:2]))}**, "
-        "resultando em **deslocamento do perfil de demanda** em relação ao cenário atual."
-    )
-
+        "resultando em **deslocamento do perfil de demanda** em relação ao cenário atual.")
     return texto, "info"
 
 
@@ -324,11 +314,142 @@ def pizza_sim(values, title):
     fig.update_layout(height=460, title=title, template="plotly_white")
     return fig
 
+
+def gerar_recomendacao(faixa_dominante, prob_max):
+    if faixa_dominante == "Acima de 40" and prob_max >= 0.70:
+        return "✅ Recomendar fortemente a oferta"
+
+    if faixa_dominante == "Acima de 40" and prob_max >= 0.50:
+        return "🟢 Recomendar a oferta"
+
+    if faixa_dominante == "Entre 21 e 40" and prob_max >= 0.50:
+        return "🟡 Oferta com cautela"
+
+    if faixa_dominante == "Abaixo de 21" and prob_max >= 0.60:
+        return "🔴 Não priorizar oferta"
+
+    return "⚠️ Analisar manualmente"
+
+def gerar_cenario_futuro(linha_base, ano_futuro, cenario="base"):
+    linha = linha_base.copy(deep=True)
+    linha['ANO'] = ano_futuro
+
+    if cenario == "conservador":
+        linha['SALDO_EMPREGO'] *= 1.00
+        linha['QTD_CONC'] *= 1.05
+        linha['SALARIO_MEDIO'] *= 1.02
+        linha['VLR_MEDIO_BENEFICIO'] *= 1.02
+
+    elif cenario == "otimista":
+        linha['SALDO_EMPREGO'] *= 1.10
+        linha['QTD_CONC'] *= 1.00
+        linha['SALARIO_MEDIO'] *= 1.05
+        linha['VLR_MEDIO_BENEFICIO'] *= 1.03
+
+    else:  # cenário base
+        linha['SALDO_EMPREGO'] *= 1.05
+        linha['QTD_CONC'] *= 1.02
+        linha['SALARIO_MEDIO'] *= 1.03
+        linha['VLR_MEDIO_BENEFICIO'] *= 1.02
+
+    return linha
+
+
+def gerar_matriz_curso_unidade_futuro(df_historico, ano_futuro, cenario="base"):
+    resultados = []
+    unidades = df_historico['UNIDADE'].unique()
+    cursos = df_historico['CURSO'].unique()
+
+    for unidade in unidades:
+
+        # -------------------------------
+        # Contexto local da unidade
+        # -------------------------------
+        df_unid = df_historico[df_historico['UNIDADE'] == unidade]
+
+        base_unidade = (
+            df_unid
+            .sort_values('ANO')
+            .iloc[-1]
+            .copy(deep=True)
+        )
+
+        for curso in cursos:
+
+            df_uc = df_historico[
+                (df_historico['UNIDADE'] == unidade) &
+                (df_historico['CURSO'] == curso)
+            ]
+
+            # ======================================================
+            # CASO 1 — Curso já existiu na unidade
+            # ======================================================
+            if not df_uc.empty:
+                linha_base = (
+                    df_uc
+                    .sort_values('ANO')
+                    .iloc[-1]
+                    .copy(deep=True)
+                )
+                historico = True
+
+            # ======================================================
+            # CASO 2 — Curso nunca existiu na unidade
+            # ======================================================
+            else:
+                df_curso_global = df_historico[
+                    df_historico['CURSO'] == curso
+                ]
+
+                if df_curso_global.empty:
+                    continue  # curso sem histórico nenhum
+
+                linha_base = base_unidade.copy(deep=True)
+                linha_base['CURSO'] = curso
+
+                # imputação defensável
+                linha_base['QTD_CONC'] = df_curso_global['QTD_CONC'].median()
+                historico = False
+
+            # ======================================================
+            # CENÁRIO FUTURO
+            # ======================================================
+            linha_futura = gerar_cenario_futuro(
+                linha_base,
+                ano_futuro=ano_futuro,
+                cenario=cenario
+            )
+
+            X = build_X(linha_futura)
+            probs = modelo.predict_proba(X)[0]
+
+            faixa_idx = int(np.argmax(probs))
+            faixa_nome = FAIXAS[faixa_idx]
+            prob_max = float(np.max(probs))
+
+            recomendacao = gerar_recomendacao(
+                faixa_dominante=faixa_nome,
+                prob_max=prob_max
+            )
+
+            resultados.append({
+                'ANO_SIM': ano_futuro,
+                'CENARIO': cenario,
+                'UNIDADE': unidade,
+                'CURSO': curso,
+                'FAIXA_DOMINANTE': faixa_nome,
+                'PROB_MAX': prob_max,
+                'col_recom': recomendacao,
+                'HISTORICO_NA_UNIDADE': historico
+            })
+
+    return pd.DataFrame(resultados)
+
 # ==========================================================
 # ABAS
 # ==========================================================
 
-tab1, tab2 = st.tabs(["📌 Contexto do Modelo", "🔎 Painel de Decisão"])
+tab1, tab2 = st.tabs(["📌 Contexto do Modelo", " Recomendação CHP"])
 
 # ==========================================================
 # ABA 1
@@ -369,14 +490,6 @@ with tab2:
 
     # ANO
     ano_max = int(df_matricula['ANO'].max())
-    # anos_disponiveis = sorted(df_matricula['ANO'].unique())
-    # opcoes_ano = ['TODOS'] + anos_disponiveis
-    # ano_sel = st.sidebar.selectbox(
-    #     "ANO "
-    #     "(Apenas para o Contexto Histórico)",
-    #     opcoes_ano,
-    #     index=0)
-
     ano_sel = st.sidebar.selectbox(
         "ANO "
         "(Apenas para o Contexto Histórico)", 
@@ -399,38 +512,7 @@ with tab2:
     )
 
     linha_real = df_base[df_base['ANO'] == df_base['ANO'].max()].iloc[-1].copy()
-    # ==========================================================
-    # LINHA REPRESENTATIVA
-    # ==========================================================
-
-    # if curso_sel == 'GLOBAL':
-    #     df_base_real = df_matricula[
-    #         (df_matricula['UNIDADE'] == unidade_sel)
-    #     ]
-    # else:
-    #     df_base_real = df_matricula[
-    #         (df_matricula['UNIDADE'] == unidade_sel) &
-    #         (df_matricula['CURSO'] == curso_sel)
-    #     ]
-
-    # if df_base_real.empty:
-    #     st.error(
-    #         "Não há dados disponíveis para a combinação selecionada "
-    #         "(UNIDADE / CURSO)."
-    #     )
-    #     st.stop()
-
-    # ultimo_ano_disponivel = df_base_real['ANO'].max()
-
-    # linha_real = (
-    #     df_base_real[
-    #         df_base_real['ANO'] == ultimo_ano_disponivel
-    #     ]
-    #     .sort_values('CURSO')
-    #     .iloc[-1]
-    #     .copy(deep=True)
-    # )
-
+ 
     # ---------- PROBABILIDADE REAL ----------
     probs_real = modelo.predict_proba(build_X(linha_real))[0]
 
@@ -441,14 +523,13 @@ with tab2:
     impactos_real = impacto_variaveis_locais(
         linha_real=linha_real,
         linha_sim=linha_real, 
-        faixa_idx=faixa_idx_real
-    )
+        faixa_idx=faixa_idx_real)
 
     # ==========================================================
     # LAYOUT: REAL | DIVISOR | SIMULADO
     # ==========================================================
 
-    col_real, col_div, col_sim = st.columns([1.8, 0.05, 1.2])
+    col_real, col_div, col_sim , col_recom = st.columns([1.8, 0.05, 1.2])
 
     # ---------- REAL ----------
     with col_real:
@@ -540,10 +621,6 @@ with tab2:
             emp_sim = st.number_input(labels_exibicao['QTD_EMPRESAS'], value=int(linha_real['QTD_EMPRESAS']))
             bf_sim = st.number_input(labels_exibicao['VLR_MEDIO_BENEFICIO'], value=float(linha_real['VLR_MEDIO_BENEFICIO']))
 
-        # with c2:
-            # matc_sim = st.number_input(labels_exibicao['QTD_MAT_CONC'], value=int(linha_real['QTD_MAT_CONC']))
-            # vinc_sim = st.number_input(labels_exibicao['QTD_VINCULOS'], value=int(linha_real['QTD_VINCULOS']))
-
         with c2:
             sal_sim = st.number_input(labels_exibicao['SALARIO_MEDIO'], value=float(linha_real['SALARIO_MEDIO']))
             saldo_sim = st.number_input(labels_exibicao['SALDO_EMPREGO'], value=int(linha_real['SALDO_EMPREGO']))
@@ -586,8 +663,60 @@ with tab2:
     st.divider()
     st.caption(
         f"As probabilidades refletem o risco estimado considerando "
-        f"simultaneamente **ano {ano_sel}**, UNIDADE, CURSO e MUNICÍPIO."
-    )
+        f"simultaneamente **ano {ano_sel}**, UNIDADE, CURSO e MUNICÍPIO.")
 
+    st.divider()
+with col_recom:
+    st.subheader("📌 Recomendações de Cursos – Planejamento Futuro")
+
+    # ==========================================================
+    # GERA MATRIZ FUTURA CURSO × UNIDADE
+    # ==========================================================
+    df_planejamento_2026 = gerar_matriz_curso_unidade_futuro(
+        df_historico=df_matricula,
+        ano_futuro=2026,
+        cenario="base")
+
+    # ==========================================================
+    # FILTRA PARA A UNIDADE SELECIONADA
+    # ==========================================================
+    df_recom_unidade = df_planejamento_2026[df_planejamento_2026['UNIDADE'] == unidade_sel].copy()
+
+    # ==========================================================
+    # ORGANIZA COLUNAS PARA EXIBIÇÃO
+    # ==========================================================
+    df_recom_unidade = df_recom_unidade[
+        [
+            'CURSO',
+            'col_recom',
+            'PROB_MAX',
+            'FAIXA_DOMINANTE']]
+
+    # Ajustes visuais
+    df_recom_unidade['PROB_MAX'] = (
+        df_recom_unidade['PROB_MAX'] * 100
+    ).round(1)
+
+    df_recom_unidade = df_recom_unidade.rename(columns={
+        'CURSO': 'Curso Técnico',
+        'col_recom': 'Recomendação',
+        'PROB_MAX': 'Probabilidade (%)',
+        'FAIXA_DOMINANTE': 'Faixa de Matrícula'})
+
+    # ==========================================================
+    # ORDENA: melhores recomendações primeiro
+    # ==========================================================
+    df_recom_unidade = df_recom_unidade.sort_values(
+        by='Probabilidade (%)',
+        ascending=False)
+
+    # ==========================================================
+    # EXIBE TABELA
+    # ==========================================================
+    st.dataframe(
+        df_recom_unidade,
+        use_container_width=True,
+        hide_index=True)
+        
 
 # Inserir no filtro Curso e Município Aluno a opção de ter um global
