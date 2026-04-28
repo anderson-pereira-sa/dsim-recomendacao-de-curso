@@ -486,7 +486,7 @@ with tab2:
     # SIDEBAR – FILTROS DE CONTEXTO (COM GLOBAL)
     # ==========================================================
 
-    st.sidebar.header("🎯 Contexto da Análise")
+    st.sidebar.header("🔷 Contexto da Análise")
 
     # ANO
     ano_max = int(df_matricula['ANO'].max())
@@ -605,8 +605,12 @@ with tab2:
 
     # ---------- DIVISOR ----------
     with col_div:
-        for _ in range(24):
-            st.markdown("|")
+        if curso_sel == 'GLOBAL':
+            for _ in range(30):
+                st.markdown("|")
+        else:
+            for _ in range(24):
+                st.markdown("|")
 
     # ---------- SIMULADO ----------
     with col_sim:
@@ -660,12 +664,6 @@ with tab2:
             st.markdown("#### 🧠 Análise do cenário")
             st.info(texto_exec)
 
-    # ---------- RODAPÉ ----------
-    st.divider()
-    st.caption(
-        f"As probabilidades refletem o risco estimado considerando "
-        f"simultaneamente **ano {ano_sel}**, UNIDADE, CURSO e MUNICÍPIO.")
-
     st.divider()
 # with col_recom:
     st.subheader("📜 Recomendações de Cursos – CHP")
@@ -711,6 +709,11 @@ with tab2:
     # EXIBE TABELA
     # ==========================================================
     st.dataframe(df_recom_unidade, use_container_width=True, hide_index=True)
-        
+
+    # ---------- RODAPÉ ----------
+    st.divider()
+    st.caption(
+        f"As probabilidades refletem o risco estimado considerando "
+        f"simultaneamente **ANO**, **UNIDADE**, **CURSO** e **MUNICÍPIO**.")
 
 # Inserir no filtro Curso e Município Aluno a opção de ter um global
