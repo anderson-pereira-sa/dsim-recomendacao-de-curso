@@ -529,7 +529,8 @@ with tab2:
     # LAYOUT: REAL | DIVISOR | SIMULADO
     # ==========================================================
 
-    col_real, col_div, col_sim , col_recom = st.columns([1.8, 0.05, 1.2, 1.4])
+    # col_real, col_div, col_sim , col_recom = st.columns([1.8, 0.05, 1.2, 1.4])
+    col_real, col_div, col_sim = st.columns([1.8, 0.05, 1.2])
 
     # ---------- REAL ----------
     with col_real:
@@ -666,8 +667,8 @@ with tab2:
         f"simultaneamente **ano {ano_sel}**, UNIDADE, CURSO e MUNICÍPIO.")
 
     st.divider()
-with col_recom:
-    st.subheader("📌 Recomendações de Cursos – Planejamento Futuro")
+# with col_recom:
+    st.subheader("📜 Recomendações de Cursos – CHP")
 
     # ==========================================================
     # GERA MATRIZ FUTURA CURSO × UNIDADE
@@ -693,9 +694,7 @@ with col_recom:
             'FAIXA_DOMINANTE']]
 
     # Ajustes visuais
-    df_recom_unidade['PROB_MAX'] = (
-        df_recom_unidade['PROB_MAX'] * 100
-    ).round(1)
+    df_recom_unidade['PROB_MAX'] = (df_recom_unidade['PROB_MAX'] * 100).round(1)
 
     df_recom_unidade = df_recom_unidade.rename(columns={
         'CURSO': 'Curso Técnico',
@@ -706,17 +705,12 @@ with col_recom:
     # ==========================================================
     # ORDENA: melhores recomendações primeiro
     # ==========================================================
-    df_recom_unidade = df_recom_unidade.sort_values(
-        by='Probabilidade (%)',
-        ascending=False)
+    df_recom_unidade = df_recom_unidade.sort_values(by='Probabilidade (%)',ascending=False)
 
     # ==========================================================
     # EXIBE TABELA
     # ==========================================================
-    st.dataframe(
-        df_recom_unidade,
-        use_container_width=True,
-        hide_index=True)
+    st.dataframe(df_recom_unidade, use_container_width=True, hide_index=True)
         
 
 # Inserir no filtro Curso e Município Aluno a opção de ter um global
