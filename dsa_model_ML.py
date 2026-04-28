@@ -696,27 +696,27 @@ with tab2:
     for curso in df_matricula['CURSO'].unique():
 
     # usa o mesmo contexto da unidade, muda apenas o curso
-    linha_simulada = linha_sim.copy(deep=True)
-    linha_simulada['CURSO'] = curso
-    linha_simulada['ANO'] = 2026
+        linha_simulada = linha_sim.copy(deep=True)
+        linha_simulada['CURSO'] = curso
+        linha_simulada['ANO'] = 2026
 
-    X = build_X(linha_simulada)
-    probs = modelo.predict_proba(X)[0]
+        X = build_X(linha_simulada)
+        probs = modelo.predict_proba(X)[0]
 
-    faixa_idx = int(np.argmax(probs))
-    faixa_nome = FAIXAS[faixa_idx]
-    prob_max = float(np.max(probs))
+        faixa_idx = int(np.argmax(probs))
+        faixa_nome = FAIXAS[faixa_idx]
+        prob_max = float(np.max(probs))
 
-    recomendacao = gerar_recomendacao(
-        faixa_dominante=faixa_nome,
-        prob_max=prob_max
-    )
+        recomendacao = gerar_recomendacao(
+            faixa_dominante=faixa_nome,
+            prob_max=prob_max
+        )
 
-    resultados_simulados.append({
-        'UNIDADE': unidade_sel,
-        'CURSO': curso,
-        'RECOM_SIMULADO': recomendacao
-    })
+        resultados_simulados.append({
+            'UNIDADE': unidade_sel,
+            'CURSO': curso,
+            'RECOM_SIMULADO': recomendacao
+        })
 
     df_simulado_2026 = pd.DataFrame(resultados_simulados)
 
