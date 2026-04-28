@@ -447,10 +447,11 @@ def gerar_matriz_curso_unidade_futuro(df_historico, ano_futuro, cenario="base"):
             faixa_nome = FAIXAS[faixa_idx]
             prob_max = float(np.max(probs))
 
-            recomendacao = gerar_recomendacao(
+            recomendacao = formatar_recomendacao_celula(
                 faixa_dominante=faixa_nome,
                 prob_max=prob_max
             )
+
 
             resultados.append({
                 'ANO_SIM': ano_futuro,
@@ -464,6 +465,21 @@ def gerar_matriz_curso_unidade_futuro(df_historico, ano_futuro, cenario="base"):
             })
 
     return pd.DataFrame(resultados)
+
+def formatar_recomendacao_celula(faixa_dominante, prob_max):
+    prob_pct = round(prob_max * 100, 1)
+    if faixa_dominante == "Acima de 40" and prob_max >= 0.70:
+        icone = "✅"
+    elif faixa_dominante == "Acima de 40":
+        icone = "🟢"
+    elif faixa_dominante == "Entre 21 e 40":
+        icone = "🟡"
+    elif faixa_dominante == "Abaixo de 21":
+        icone = "🔴"
+    else:
+        icone = "⚠️"
+
+    return f"{icone} {faixa_dominante} ({prob_pct}%)"
 
 # ==========================================================
 # ABAS
@@ -707,7 +723,7 @@ with tab2:
         faixa_nome = FAIXAS[faixa_idx]
         prob_max = float(np.max(probs))
 
-        recomendacao = gerar_recomendacao(
+        recomendacao = formatar_recomendacao_celula(
             faixa_dominante=faixa_nome,
             prob_max=prob_max
         )
@@ -794,6 +810,16 @@ with tab2:
     # ==========================================================
     # EXIBE TABELA
     # ==========================================================
+
+    st.markdown("""
+        **Legenda das Recomendações:**
+
+        - ✅ **Recomendar fortemente** – Alta probabilidade na faixa *Acima de 40*
+        - 🟢 **Recomendar** – Probabilidade favorável na faixa *Acima de 40*
+        - 🟡 **Oferta com cautela** – Faixa *Entre 21 e 40*
+        - 🔴 **Não priorizar** – Faixa *Abaixo de 21*
+        - ⚠️ **Analisar manualmente** – Cenário indefinido ou instável
+        """)
     st.dataframe(df_recom_unidade, use_container_width=True, hide_index=True)
 
     # ---------- RODAPÉ ----------
