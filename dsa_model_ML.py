@@ -711,11 +711,44 @@ with tab2:
 
     for curso in df_matricula['CURSO'].unique():
 
-    # usa o mesmo contexto da unidade, muda apenas o curso
-        linha_simulada = linha_sim.copy(deep=True)
-        linha_simulada['CURSO'] = curso
-        linha_simulada['ANO'] = 2026
+        # ======================================================
+        # CASO 1 — CURSO SELECIONADO (USA SIMULADOR)
+        # ======================================================
+        if curso == curso_sel:
 
+            linha_simulada = linha_sim.copy(deep=True)
+            linha_simulada['CURSO'] = curso
+            linha_simulada['ANO'] = 2026
+
+        # ======================================================
+        # CASO 2 — OUTROS CURSOS (USA ÚLTIMO ANO)
+        # ======================================================
+        else:
+            df_curso_hist = df_matricula[
+                (df_matricula['UNIDADE'] == unidade_sel) &
+                (df_matricula['CURSO'] == curso)
+            ]
+
+            if df_curso_hist.empty:
+                continue
+
+            linha_simulada = (
+                df_curso_hist
+                .sort_values('ANO')
+                .iloc[-1]
+                .copy(deep=True)
+            )
+            linha_simulada['ANO'] = 2026
+
+            # ✅ Regra: variáveis macro do simulado impactam TODOS
+            linha_simulada['QTD_EMPRESAS'] = emp_sim
+            linha_simulada['VLR_MEDIO_BENEFICIO'] = bf_sim
+            linha_simulada['QTD_CONC'] = conc_sim
+            linha_simulada['SALDO_EMPREGO'] = saldo_sim
+
+        # ======================================================
+        # PREDIÇÃO
+        # ======================================================
         X = build_X(linha_simulada)
         probs = modelo.predict_proba(X)[0]
 
@@ -729,12 +762,12 @@ with tab2:
         )
 
         resultados_simulados.append({
-            'UNIDADE': unidade_sel,
             'CURSO': curso,
             'RECOM_SIMULADO': recomendacao
         })
 
     df_simulado_2026 = pd.DataFrame(resultados_simulados)
+
 
     # ==========================================================
     # GERA MATRIZES FUTURAS POR CENÁRIO
@@ -758,6 +791,7 @@ with tab2:
         cenario="otimista"
     )
 
+   
     # ==========================================================
     # FILTRA PARA A UNIDADE SELECIONADA
     # ==========================================================
@@ -783,6 +817,35 @@ with tab2:
                                         ).merge(df_oti_u, on='CURSO', how='left'
                                                 ).merge(df_simulado_2026, on=['CURSO'], how='left'))
 
+    cenarios_sel = st.multiselect(
+        "Cenários para comparação",
+        ['Base', 'Conservador', 'Otimista', 'Simulado'],
+        default=['Base', 'Otimista', 'Simulado']
+    )
+
+    colunas_finais = ['Curso Técnico']
+
+    if 'Base' in cenarios_sel:
+        colunas_finais.append('Recomendação – Base')
+    if 'Conservador' in cenarios_sel:
+        colunas_finais.append('Recomendação – Conservador')
+    if 'Otimista' in cenarios_sel:
+        colunas_finais.append('Recomendação – Otimista')
+    if 'Simulado' in cenarios_sel:
+        colunas_finais.append('Recomendação – Simulado')
+
+    df_recom_unidade = df_recom_unidade[colunas_finais]
+
+    unidades_sel = st.multiselect(
+        "UNIDADE",
+        sorted(df_matricula['UNIDADE'].unique()),
+        default=[unidade_sel]
+    )
+
+    df_base_u = df_base_2026[df_base_2026['UNIDADE'].isin(unidades_sel)]
+    df_cons_u = df_conservador_2026[df_conservador_2026['UNIDADE'].isin(unidades_sel)]
+    df_oti_u  = df_otimista_2026[df_otimista_2026['UNIDADE'].isin(unidades_sel)]
+
     # ==========================================================
     # ORGANIZA COLUNAS PARA EXIBIÇÃO
     # ==========================================================
@@ -793,11 +856,13 @@ with tab2:
         'Otimista': 'Otimista',
         'RECOM_SIMULADO': 'Simulado'
     })
+    if 'UNIDADE' in df_recom_unidade.columns:
+        df_recom_unidade = df_recom_unidade.drop(columns=['UNIDADE'])
 
     # ==========================================================
     # ORDENA: melhores recomendações primeiro
     # ==========================================================
-    df_recom_unidade = df_recom_unidade.sort_values(by='Curso Técnico',ascending=False)
+    df_recom_unidade = df_recom_unidade.sort_values(by='Curso Técnico',ascending=True)
 
     # ==========================================================
     # EXIBE TABELA
