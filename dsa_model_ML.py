@@ -216,7 +216,7 @@ def analise_executiva_prob_real(
     faixa_dominante,
     prob_dominante,
     impactos_dict,
-    limite_otimo=0.80,
+    limite_otimo=0.69,
     limite_relevante_pp=1.0
 ):
     impactos = pd.Series(impactos_dict).sort_values(key=abs, ascending=False)
