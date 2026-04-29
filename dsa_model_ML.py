@@ -599,7 +599,7 @@ with tab1:
 
 with tab2:
 
-    st.subheader("📌 Painel de Análise")
+    st.subheader("📈 Painel de Análise")
 
     # ==========================================================
     # SIDEBAR – FILTROS DE CONTEXTO (COM GLOBAL)
@@ -607,22 +607,32 @@ with tab2:
 
     st.sidebar.header("🔷 Contexto da Análise")
 
+    # ==========================================================
+    # FILTROS DE CONTEXTO
+    # ==========================================================
+
     # ANO
     ano_max = int(df_matricula['ANO'].max())
     ano_sel = st.sidebar.selectbox(
-        "ANO "
-        "(Apenas para o Contexto Histórico)", 
-        ['TODOS'] + sorted(df_matricula['ANO'].unique()))
+        "ANO (Apenas para o Contexto Histórico)",
+        ['TODOS'] + sorted(df_matricula['ANO'].unique())
+    )
 
     ano_modelo = ano_max if ano_sel == 'TODOS' else ano_sel
     df_ano = df_matricula if ano_sel == 'TODOS' else df_matricula[df_matricula['ANO'] == ano_sel]
 
     # UNIDADE
-    unidade_sel = st.sidebar.selectbox("UNIDADE", sorted(df_ano['UNIDADE'].unique()))
+    unidade_sel = st.sidebar.selectbox(
+        "UNIDADE",
+        sorted(df_ano['UNIDADE'].unique())
+    )
     df_unidade = df_ano[df_ano['UNIDADE'] == unidade_sel]
 
     # CURSO
-    curso_sel = st.sidebar.selectbox("CURSO", ['GLOBAL'] + sorted(df_unidade['CURSO'].unique()))
+    curso_sel = st.sidebar.selectbox(
+        "CURSO",
+        ['GLOBAL'] + sorted(df_unidade['CURSO'].unique())
+    )
 
     df_base = (
         df_matricula[df_matricula['UNIDADE'] == unidade_sel]
@@ -631,7 +641,44 @@ with tab2:
     )
 
     linha_real = df_base[df_base['ANO'] == df_base['ANO'].max()].iloc[-1].copy()
- 
+
+    # ==========================================================
+    # CENÁRIO SIMULADO (PARÂMETROS)
+    # ==========================================================
+
+    st.sidebar.divider()
+    st.sidebar.subheader("🧪 Cenário Simulado")
+
+    # Garantia defensiva (caso a coluna não exista)
+    if 'VLR_MEDIO_BENEFICIO' not in linha_real.index:
+        linha_real['VLR_MEDIO_BENEFICIO'] = 0.0
+
+    conc_sim = st.sidebar.number_input(
+        labels_exibicao['QTD_CONC'],
+        value=int(linha_real['QTD_CONC'])
+    )
+
+    emp_sim = st.sidebar.number_input(
+        labels_exibicao['QTD_EMPRESAS'],
+        value=int(linha_real['QTD_EMPRESAS'])
+    )
+
+    bf_sim = st.sidebar.number_input(
+        labels_exibicao['VLR_MEDIO_BENEFICIO'],
+        value=float(linha_real['VLR_MEDIO_BENEFICIO'])
+    )
+
+    sal_sim = st.sidebar.number_input(
+        labels_exibicao['SALARIO_MEDIO'],
+        value=float(linha_real['SALARIO_MEDIO'])
+    )   
+
+    saldo_sim = st.sidebar.number_input(
+        labels_exibicao['SALDO_EMPREGO'],
+        value=int(linha_real['SALDO_EMPREGO'])
+    )
+    
+
     # ---------- PROBABILIDADE REAL ----------
     probs_real = modelo.predict_proba(build_X(linha_real))[0]
 
@@ -736,18 +783,6 @@ with tab2:
 
         st.subheader("🧪 Cenário SIMULADO")
         st.markdown("##### Parâmetros do cenário projetado")
-
-        # c1, c2, c3 = st.columns(3)
-        c1, c2 = st.columns(2)
-
-        with c1:
-            conc_sim = st.number_input(labels_exibicao['QTD_CONC'], value=int(linha_real['QTD_CONC']))
-            emp_sim = st.number_input(labels_exibicao['QTD_EMPRESAS'], value=int(linha_real['QTD_EMPRESAS']))
-            bf_sim = st.number_input(labels_exibicao['VLR_MEDIO_BENEFICIO'], value=float(linha_real['VLR_MEDIO_BENEFICIO']))
-
-        with c2:
-            sal_sim = st.number_input(labels_exibicao['SALARIO_MEDIO'], value=float(linha_real['SALARIO_MEDIO']))
-            saldo_sim = st.number_input(labels_exibicao['SALDO_EMPREGO'], value=int(linha_real['SALDO_EMPREGO']))
 
         linha_sim = linha_real.copy(deep=True)
         valores_simulados = {
