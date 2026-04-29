@@ -1003,6 +1003,6 @@ with tab2:
     st.divider()
     st.caption(
         f"As probabilidades refletem o risco estimado considerando "
-        f"simultaneamente **ANO**, **UNIDADE**, **CURSO** e **MUNICÍPIO**.")
+        f"simultaneamente **ANO**, **UNIDADE** e **CURSO**.")
 
 # Inserir no filtro Curso e Município Aluno a opção de ter um global

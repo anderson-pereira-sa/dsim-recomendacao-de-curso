@@ -61,429 +61,427 @@ municipio_unid['MUNICIPIO_COD'] = limpar_texto(municipio_unid['MUNICIPIO'])
 
 ####################################################################################################
 # >>>>>>> - FONTE RAIS VINCULO - <<<<<<< #
-df_rais_VINC = consulta('''
-WITH rais_vinc AS
-(
-SELECT 
-      COUNT(*) AS QTD_VINCULOS
-      ,SUM(vinc_rais.VL_REMUNERACAO_MEDIA_NOMINAL) as SALARIO
-      ,CASE WHEN dim_terri.NO_MUNICIPIO = 'CAMACARI' THEN 'CAMAÇARI'
-              WHEN dim_terri.NO_MUNICIPIO = 'EUNAPOLIS' THEN 'EUNÁPOLIS'
-              WHEN dim_terri.NO_MUNICIPIO = 'ILHEUS' THEN 'ILHÉUS'
-              WHEN dim_terri.NO_MUNICIPIO = 'VITORIA DA CONQUISTA' THEN 'VITÓRIA DA CONQUISTA'
-              WHEN dim_terri.NO_MUNICIPIO = 'JEQUIE' THEN 'JEQUIÉ'
-              WHEN dim_terri.NO_MUNICIPIO = 'LUIS EDUARDO MAGALHAES' THEN 'LUÍS EDUARDO MAGALHÃES'
-              WHEN dim_terri.NO_MUNICIPIO = 'SENHOR DO BONFIN' THEN 'SENHOR DO BONFIM'
-              WHEN dim_terri.NO_MUNICIPIO = 'SANTO ANTONIO DE JESUS' THEN 'SANTO ANTÔNIO DE JESUS'
-              WHEN dim_terri.NO_MUNICIPIO = 'SAO GONCALO DOS CAMPOS' THEN 'SÃO GONÇALO DOS CAMPOS'
-              WHEN dim_terri.NO_MUNICIPIO = 'SAO SEBASTIAO DO PASSE' THEN 'SÃO SEBASTIÃO DO PASSE'
-              WHEN dim_terri.NO_MUNICIPIO = 'SAO FELIPE' THEN 'SÃO FELIPE'
-              WHEN dim_terri.NO_MUNICIPIO = 'SAO FRANCISCO DO CONDE' THEN 'SÃO FRANCISCO DO CONDE'
-              WHEN dim_terri.NO_MUNICIPIO = 'SIMOES FILHO' THEN 'SIMÕES FILHO'
-              ELSE dim_terri.NO_MUNICIPIO END AS NO_MUNICIPIO    
-      ,vinc_rais.CO_CBO
-      ,CASE WHEN vinc_rais.Ano = 2022 THEN 2023
-            WHEN vinc_rais.Ano = 2023 THEN 2024
-            WHEN vinc_rais.Ano = 2024 THEN 2025
-      END AS ANO
+# df_rais_VINC = consulta('''
+# WITH rais_vinc AS
+# (
+# SELECT 
+#       COUNT(*) AS QTD_VINCULOS
+#       ,SUM(vinc_rais.VL_REMUNERACAO_MEDIA_NOMINAL) as SALARIO
+#       ,CASE WHEN dim_terri.NO_MUNICIPIO = 'CAMACARI' THEN 'CAMAÇARI'
+#               WHEN dim_terri.NO_MUNICIPIO = 'EUNAPOLIS' THEN 'EUNÁPOLIS'
+#               WHEN dim_terri.NO_MUNICIPIO = 'ILHEUS' THEN 'ILHÉUS'
+#               WHEN dim_terri.NO_MUNICIPIO = 'VITORIA DA CONQUISTA' THEN 'VITÓRIA DA CONQUISTA'
+#               WHEN dim_terri.NO_MUNICIPIO = 'JEQUIE' THEN 'JEQUIÉ'
+#               WHEN dim_terri.NO_MUNICIPIO = 'LUIS EDUARDO MAGALHAES' THEN 'LUÍS EDUARDO MAGALHÃES'
+#               WHEN dim_terri.NO_MUNICIPIO = 'SENHOR DO BONFIN' THEN 'SENHOR DO BONFIM'
+#               WHEN dim_terri.NO_MUNICIPIO = 'SANTO ANTONIO DE JESUS' THEN 'SANTO ANTÔNIO DE JESUS'
+#               WHEN dim_terri.NO_MUNICIPIO = 'SAO GONCALO DOS CAMPOS' THEN 'SÃO GONÇALO DOS CAMPOS'
+#               WHEN dim_terri.NO_MUNICIPIO = 'SAO SEBASTIAO DO PASSE' THEN 'SÃO SEBASTIÃO DO PASSE'
+#               WHEN dim_terri.NO_MUNICIPIO = 'SAO FELIPE' THEN 'SÃO FELIPE'
+#               WHEN dim_terri.NO_MUNICIPIO = 'SAO FRANCISCO DO CONDE' THEN 'SÃO FRANCISCO DO CONDE'
+#               WHEN dim_terri.NO_MUNICIPIO = 'SIMOES FILHO' THEN 'SIMÕES FILHO'
+#               ELSE dim_terri.NO_MUNICIPIO END AS NO_MUNICIPIO    
+#       ,vinc_rais.CO_CBO
+#       ,CASE WHEN vinc_rais.Ano = 2022 THEN 2023
+#             WHEN vinc_rais.Ano = 2023 THEN 2024
+#             WHEN vinc_rais.Ano = 2024 THEN 2025
+#       END AS ANO
 
-FROM DB_OBSERVATORIO.rais.vinculos_bahia_historico vinc_rais
-LEFT JOIN DB_OBSERVATORIO.referencia.dimensao_territorio_territorio_identidade dim_terri ON vinc_rais.CO_MUN_IBGE_6 = dim_terri.CO_MUN_IBGE_6
-WHERE Ano IN (2022, 2023, 2024)
-GROUP BY dim_terri.NO_MUNICIPIO ,vinc_rais.Ano, vinc_rais.CO_CBO
-)
-SELECT 
-      SUM(QTD_VINCULOS) AS QTD_VINCULOS
-      ,SUM(SALARIO) / NULLIF(SUM(QTD_VINCULOS),0) AS SALARIO_MEDIO
-      ,NO_MUNICIPIO
-      ,CO_CBO
-      ,ANO
-FROM rais_vinc
-GROUP BY NO_MUNICIPIO, CO_CBO, ANO
-ORDER BY NO_MUNICIPIO DESC;
-''')
+# FROM DB_OBSERVATORIO.rais.vinculos_bahia_historico vinc_rais
+# LEFT JOIN DB_OBSERVATORIO.referencia.dimensao_territorio_territorio_identidade dim_terri ON vinc_rais.CO_MUN_IBGE_6 = dim_terri.CO_MUN_IBGE_6
+# WHERE Ano IN (2022, 2023, 2024)
+# GROUP BY dim_terri.NO_MUNICIPIO ,vinc_rais.Ano, vinc_rais.CO_CBO
+# )
+# SELECT 
+#       SUM(QTD_VINCULOS) AS QTD_VINCULOS
+#       ,SUM(SALARIO) / NULLIF(SUM(QTD_VINCULOS),0) AS SALARIO_MEDIO
+#       ,NO_MUNICIPIO
+#       ,CO_CBO
+#       ,ANO
+# FROM rais_vinc
+# GROUP BY NO_MUNICIPIO, CO_CBO, ANO
+# ORDER BY NO_MUNICIPIO DESC;
+# ''')
 
-df_rais_VINC['NO_MUNICIPIO_COD'] = limpar_texto(df_rais_VINC['NO_MUNICIPIO'])
-df_rais_VINC_1 = df_rais_VINC.merge(municipio_unid[['MUNICIPIO','UNIDADE','MUNICIPIO_COD']], 
-                            left_on='NO_MUNICIPIO_COD', right_on='MUNICIPIO_COD', how='left').drop(
-                                columns=['MUNICIPIO_COD','NO_MUNICIPIO', 'NO_MUNICIPIO_COD'], errors='ignore')
-df_rais_VINC_1['CBO_UNIDADE'] = df_rais_VINC_1['CO_CBO'].astype(str) + df_rais_VINC_1['UNIDADE']
-df_rais_VINC_2 = df_rais_VINC_1.groupby(['ANO','UNIDADE','CBO_UNIDADE'], as_index=False).agg({'QTD_VINCULOS':'sum','SALARIO_MEDIO':'mean'})
-# df_rais_VINC_2 = pd.read_excel(r"C:\Users\anderson.pereira\OneDrive - Sistema FIEB\Inteligência de Mercado\Data Science\DeploymentML\Streamlit_dsim_ML\df_rais_vinculo.xlsx")
+# df_rais_VINC['NO_MUNICIPIO_COD'] = limpar_texto(df_rais_VINC['NO_MUNICIPIO'])
+# df_rais_VINC_1 = df_rais_VINC.merge(municipio_unid[['MUNICIPIO','UNIDADE','MUNICIPIO_COD']], 
+#                             left_on='NO_MUNICIPIO_COD', right_on='MUNICIPIO_COD', how='left').drop(
+#                                 columns=['MUNICIPIO_COD','NO_MUNICIPIO', 'NO_MUNICIPIO_COD'], errors='ignore')
+# df_rais_VINC_1['CBO_UNIDADE'] = df_rais_VINC_1['CO_CBO'].astype(str) + df_rais_VINC_1['UNIDADE']
+# df_rais_VINC_2 = df_rais_VINC_1.groupby(['ANO','UNIDADE','CBO_UNIDADE'], as_index=False).agg({'QTD_VINCULOS':'sum','SALARIO_MEDIO':'mean'})
+df_rais_VINC_2 = pd.read_excel(r"C:\Users\anderson.pereira\OneDrive - Sistema FIEB\Inteligência de Mercado\Data Science\DeploymentML\Streamlit_dsim_ML\df_rais_vinculo.xlsx")
 
 
 ####################################################################################################
 # >>>>>>> - FONTE RAIS ESTABELECIMENTO - <<<<<<< #
-df_rais_ESTAB = consulta('''
-WITH rais_estab AS
-(
-SELECT 
-      COUNT(*) AS QTD_EMPRESAS
-      ,CASE WHEN dim_terri.NO_MUNICIPIO = 'CAMACARI' THEN 'CAMAÇARI'
-              WHEN dim_terri.NO_MUNICIPIO = 'EUNAPOLIS' THEN 'EUNÁPOLIS'
-              WHEN dim_terri.NO_MUNICIPIO = 'ILHEUS' THEN 'ILHÉUS'
-              WHEN dim_terri.NO_MUNICIPIO = 'VITORIA DA CONQUISTA' THEN 'VITÓRIA DA CONQUISTA'
-              WHEN dim_terri.NO_MUNICIPIO = 'JEQUIE' THEN 'JEQUIÉ'
-              WHEN dim_terri.NO_MUNICIPIO = 'LUIS EDUARDO MAGALHAES' THEN 'LUÍS EDUARDO MAGALHÃES'
-              WHEN dim_terri.NO_MUNICIPIO = 'SENHOR DO BONFIN' THEN 'SENHOR DO BONFIM'
-              WHEN dim_terri.NO_MUNICIPIO = 'SANTO ANTONIO DE JESUS' THEN 'SANTO ANTÔNIO DE JESUS'
-              WHEN dim_terri.NO_MUNICIPIO = 'SAO GONCALO DOS CAMPOS' THEN 'SÃO GONÇALO DOS CAMPOS'
-              WHEN dim_terri.NO_MUNICIPIO = 'SAO SEBASTIAO DO PASSE' THEN 'SÃO SEBASTIÃO DO PASSE'
-              WHEN dim_terri.NO_MUNICIPIO = 'SAO FELIPE' THEN 'SÃO FELIPE'
-              WHEN dim_terri.NO_MUNICIPIO = 'SAO FRANCISCO DO CONDE' THEN 'SÃO FRANCISCO DO CONDE'
-              WHEN dim_terri.NO_MUNICIPIO = 'SIMOES FILHO' THEN 'SIMÕES FILHO'
-              ELSE dim_terri.NO_MUNICIPIO END AS NO_MUNICIPIO    
-      ,est_rais.COD_SUBCLASSE_CNAE
-      ,CASE WHEN est_rais.Ano = 2022 THEN 2023
-            WHEN est_rais.Ano = 2023 THEN 2024
-            WHEN est_rais.Ano = 2024 THEN 2025
-      END AS ANO
-FROM DB_OBSERVATORIO.rais.estabelecimentos_bahia_historico est_rais
-LEFT JOIN DB_OBSERVATORIO.referencia.dimensao_territorio_territorio_identidade dim_terri ON est_rais.COD_MUN = dim_terri.CO_MUN_IBGE_6
-WHERE Ano IN (2022, 2023, 2024)
+# df_rais_ESTAB = consulta('''
+# WITH rais_estab AS
+# (
+# SELECT 
+#       COUNT(*) AS QTD_EMPRESAS
+#       ,CASE WHEN dim_terri.NO_MUNICIPIO = 'CAMACARI' THEN 'CAMAÇARI'
+#               WHEN dim_terri.NO_MUNICIPIO = 'EUNAPOLIS' THEN 'EUNÁPOLIS'
+#               WHEN dim_terri.NO_MUNICIPIO = 'ILHEUS' THEN 'ILHÉUS'
+#               WHEN dim_terri.NO_MUNICIPIO = 'VITORIA DA CONQUISTA' THEN 'VITÓRIA DA CONQUISTA'
+#               WHEN dim_terri.NO_MUNICIPIO = 'JEQUIE' THEN 'JEQUIÉ'
+#               WHEN dim_terri.NO_MUNICIPIO = 'LUIS EDUARDO MAGALHAES' THEN 'LUÍS EDUARDO MAGALHÃES'
+#               WHEN dim_terri.NO_MUNICIPIO = 'SENHOR DO BONFIN' THEN 'SENHOR DO BONFIM'
+#               WHEN dim_terri.NO_MUNICIPIO = 'SANTO ANTONIO DE JESUS' THEN 'SANTO ANTÔNIO DE JESUS'
+#               WHEN dim_terri.NO_MUNICIPIO = 'SAO GONCALO DOS CAMPOS' THEN 'SÃO GONÇALO DOS CAMPOS'
+#               WHEN dim_terri.NO_MUNICIPIO = 'SAO SEBASTIAO DO PASSE' THEN 'SÃO SEBASTIÃO DO PASSE'
+#               WHEN dim_terri.NO_MUNICIPIO = 'SAO FELIPE' THEN 'SÃO FELIPE'
+#               WHEN dim_terri.NO_MUNICIPIO = 'SAO FRANCISCO DO CONDE' THEN 'SÃO FRANCISCO DO CONDE'
+#               WHEN dim_terri.NO_MUNICIPIO = 'SIMOES FILHO' THEN 'SIMÕES FILHO'
+#               ELSE dim_terri.NO_MUNICIPIO END AS NO_MUNICIPIO    
+#       ,est_rais.COD_SUBCLASSE_CNAE
+#       ,CASE WHEN est_rais.Ano = 2022 THEN 2023
+#             WHEN est_rais.Ano = 2023 THEN 2024
+#             WHEN est_rais.Ano = 2024 THEN 2025
+#       END AS ANO
+# FROM DB_OBSERVATORIO.rais.estabelecimentos_bahia_historico est_rais
+# LEFT JOIN DB_OBSERVATORIO.referencia.dimensao_territorio_territorio_identidade dim_terri ON est_rais.COD_MUN = dim_terri.CO_MUN_IBGE_6
+# WHERE Ano IN (2022, 2023, 2024)
 
-GROUP BY -- est_rais.Qtd_Vinculos_Ativos
-         dim_terri.NO_MUNICIPIO
-         ,est_rais.COD_SUBCLASSE_CNAE
-         ,est_rais.Ano
-)
-SELECT 
-      SUM(QTD_EMPRESAS) AS QTD_EMPRESAS
-      ,NO_MUNICIPIO
-      ,ANO
-FROM rais_estab
-GROUP BY NO_MUNICIPIO, ANO
-ORDER BY NO_MUNICIPIO DESC
-;
-''')
+# GROUP BY -- est_rais.Qtd_Vinculos_Ativos
+#          dim_terri.NO_MUNICIPIO
+#          ,est_rais.COD_SUBCLASSE_CNAE
+#          ,est_rais.Ano
+# )
+# SELECT 
+#       SUM(QTD_EMPRESAS) AS QTD_EMPRESAS
+#       ,NO_MUNICIPIO
+#       ,ANO
+# FROM rais_estab
+# GROUP BY NO_MUNICIPIO, ANO
+# ORDER BY NO_MUNICIPIO DESC
+# ;
+# ''')
 
-df_rais_ESTAB['NO_MUNICIPIO_COD'] = limpar_texto(df_rais_ESTAB['NO_MUNICIPIO'])
-df_rais_ESTAB_1 = df_rais_ESTAB.merge(municipio_unid[['MUNICIPIO','UNIDADE','MUNICIPIO_COD']], 
-                            left_on='NO_MUNICIPIO_COD', right_on='MUNICIPIO_COD', how='left').drop(
-                                columns=['MUNICIPIO_COD','NO_MUNICIPIO', 'NO_MUNICIPIO_COD'], errors='ignore')
-df_rais_ESTAB_2 = df_rais_ESTAB_1.groupby(['ANO','UNIDADE'], as_index=False).agg({'QTD_EMPRESAS':'sum'})
-# df_rais_ESTAB_2 = pd.read_excel(r"C:\Users\anderson.pereira\OneDrive - Sistema FIEB\Inteligência de Mercado\Data Science\DeploymentML\Streamlit_dsim_ML\df_rais_ESTAB_2.xlsx")
+# df_rais_ESTAB['NO_MUNICIPIO_COD'] = limpar_texto(df_rais_ESTAB['NO_MUNICIPIO'])
+# df_rais_ESTAB_1 = df_rais_ESTAB.merge(municipio_unid[['MUNICIPIO','UNIDADE','MUNICIPIO_COD']], 
+#                             left_on='NO_MUNICIPIO_COD', right_on='MUNICIPIO_COD', how='left').drop(
+#                                 columns=['MUNICIPIO_COD','NO_MUNICIPIO', 'NO_MUNICIPIO_COD'], errors='ignore')
+# df_rais_ESTAB_2 = df_rais_ESTAB_1.groupby(['ANO','UNIDADE'], as_index=False).agg({'QTD_EMPRESAS':'sum'})
+df_rais_ESTAB_2 = pd.read_excel(r"C:\Users\anderson.pereira\OneDrive - Sistema FIEB\Inteligência de Mercado\Data Science\DeploymentML\Streamlit_dsim_ML\df_rais_ESTAB_2.xlsx")
 
 
 ####################################################################################################
 # >>>>>>> - FONTE CAGED - <<<<<<< #
-df_caged = consulta('''
-WITH CAGED_BAHIA_CTE AS
-(
-SELECT DISTINCT
-      YEAR(Data) AS ANO
-      ,municipio
-      ,cbo2002_ocupacao as CO_CBO
-      ,SUBSTRING(CAST(cbo2002_ocupacao AS VARCHAR(10)), 1, 4) AS CO_CBO_FAMILIA
-      ,SUM(CASE WHEN desligados > 0 THEN salario ELSE 0 END) AS SALARIO_DESLIGADOS
-      ,SUM(CASE WHEN admitidos > 0 THEN salario ELSE 0 END) AS SALARIO_ADMITIDOS
-      ,AVG(salario) AS SALARIO_MEDIO
-      ,SUM(admitidos) AS SUM_ADMITIDOS
-      ,SUM(desligados) AS SUM_DESLIGADOS
+# df_caged = consulta('''
+# WITH CAGED_BAHIA_CTE AS
+# (
+# SELECT DISTINCT
+#       YEAR(Data) AS ANO
+#       ,municipio
+#       ,cbo2002_ocupacao as CO_CBO
+#       ,SUBSTRING(CAST(cbo2002_ocupacao AS VARCHAR(10)), 1, 4) AS CO_CBO_FAMILIA
+#       ,SUM(CASE WHEN desligados > 0 THEN salario ELSE 0 END) AS SALARIO_DESLIGADOS
+#       ,SUM(CASE WHEN admitidos > 0 THEN salario ELSE 0 END) AS SALARIO_ADMITIDOS
+#       ,AVG(salario) AS SALARIO_MEDIO
+#       ,SUM(admitidos) AS SUM_ADMITIDOS
+#       ,SUM(desligados) AS SUM_DESLIGADOS
 
-FROM DB_OBSERVATORIO.caged.caged_bahia
+# FROM DB_OBSERVATORIO.caged.caged_bahia
 
-WHERE YEAR(Data) IN (2023, 2024, 2025)
-    AND salario BETWEEN 0.3*1518 AND 150 * 1518 -- Salário mínimo de 2025 é R$ 1.518,00
-    AND categoria <> 111 -- Trabalhadores intermitentes
-    -- AND indicador_aprendiz <> '1' -- Exclui aprendizes: SIM
-    -- AND tam_estab_jan <> 98 -- Inválido
-    -- AND tipo_movimentacao <> 60 -- Desligamento por morte 
-GROUP BY YEAR(Data), municipio, cbo2002_ocupacao
-)
+# WHERE YEAR(Data) IN (2023, 2024, 2025)
+#     AND salario BETWEEN 0.3*1518 AND 150 * 1518 -- Salário mínimo de 2025 é R$ 1.518,00
+#     AND categoria <> 111 -- Trabalhadores intermitentes
+#     -- AND indicador_aprendiz <> '1' -- Exclui aprendizes: SIM
+#     -- AND tam_estab_jan <> 98 -- Inválido
+#     -- AND tipo_movimentacao <> 60 -- Desligamento por morte 
+# GROUP BY YEAR(Data), municipio, cbo2002_ocupacao
+# )
 
-SELECT caged_final.ANO, 
-       CASE WHEN dim_terri.NO_MUNICIPIO = 'CAMACARI' THEN 'CAMAÇARI'
-              WHEN dim_terri.NO_MUNICIPIO = 'EUNAPOLIS' THEN 'EUNÁPOLIS'
-              WHEN dim_terri.NO_MUNICIPIO = 'ILHEUS' THEN 'ILHÉUS'
-              WHEN dim_terri.NO_MUNICIPIO = 'VITORIA DA CONQUISTA' THEN 'VITÓRIA DA CONQUISTA'
-              WHEN dim_terri.NO_MUNICIPIO = 'JEQUIE' THEN 'JEQUIÉ'
-              WHEN dim_terri.NO_MUNICIPIO = 'LUIS EDUARDO MAGALHAES' THEN 'LUÍS EDUARDO MAGALHÃES'
-              WHEN dim_terri.NO_MUNICIPIO = 'SENHOR DO BONFIN' THEN 'SENHOR DO BONFIM'
-              WHEN dim_terri.NO_MUNICIPIO = 'SANTO ANTONIO DE JESUS' THEN 'SANTO ANTÔNIO DE JESUS'
-              WHEN dim_terri.NO_MUNICIPIO = 'SAO GONCALO DOS CAMPOS' THEN 'SÃO GONÇALO DOS CAMPOS'
-              WHEN dim_terri.NO_MUNICIPIO = 'SAO SEBASTIAO DO PASSE' THEN 'SÃO SEBASTIÃO DO PASSE'
-              WHEN dim_terri.NO_MUNICIPIO = 'SAO FELIPE' THEN 'SÃO FELIPE'
-              WHEN dim_terri.NO_MUNICIPIO = 'SAO FRANCISCO DO CONDE' THEN 'SÃO FRANCISCO DO CONDE'
-              WHEN dim_terri.NO_MUNICIPIO = 'SIMOES FILHO' THEN 'SIMÕES FILHO'
-              WHEN dim_terri.NO_MUNICIPIO = 'SANTA TEREZINHA' THEN 'SANTA TERESINHA'
-              ELSE dim_terri.NO_MUNICIPIO END AS NO_MUNICIPIO, 
-       caged_final.CO_CBO,
-       caged_final.CO_CBO_FAMILIA,
-       caged_final.SALARIO_MEDIO,
-       caged_final.SALARIO_ADMITIDOS AS SALARIO_ADMITIDOS,
-       caged_final.SALARIO_DESLIGADOS AS SALARIO_DESLIGADOS,
-       caged_final.SUM_ADMITIDOS,
-       caged_final.SUM_DESLIGADOS
+# SELECT caged_final.ANO, 
+#        CASE WHEN dim_terri.NO_MUNICIPIO = 'CAMACARI' THEN 'CAMAÇARI'
+#               WHEN dim_terri.NO_MUNICIPIO = 'EUNAPOLIS' THEN 'EUNÁPOLIS'
+#               WHEN dim_terri.NO_MUNICIPIO = 'ILHEUS' THEN 'ILHÉUS'
+#               WHEN dim_terri.NO_MUNICIPIO = 'VITORIA DA CONQUISTA' THEN 'VITÓRIA DA CONQUISTA'
+#               WHEN dim_terri.NO_MUNICIPIO = 'JEQUIE' THEN 'JEQUIÉ'
+#               WHEN dim_terri.NO_MUNICIPIO = 'LUIS EDUARDO MAGALHAES' THEN 'LUÍS EDUARDO MAGALHÃES'
+#               WHEN dim_terri.NO_MUNICIPIO = 'SENHOR DO BONFIN' THEN 'SENHOR DO BONFIM'
+#               WHEN dim_terri.NO_MUNICIPIO = 'SANTO ANTONIO DE JESUS' THEN 'SANTO ANTÔNIO DE JESUS'
+#               WHEN dim_terri.NO_MUNICIPIO = 'SAO GONCALO DOS CAMPOS' THEN 'SÃO GONÇALO DOS CAMPOS'
+#               WHEN dim_terri.NO_MUNICIPIO = 'SAO SEBASTIAO DO PASSE' THEN 'SÃO SEBASTIÃO DO PASSE'
+#               WHEN dim_terri.NO_MUNICIPIO = 'SAO FELIPE' THEN 'SÃO FELIPE'
+#               WHEN dim_terri.NO_MUNICIPIO = 'SAO FRANCISCO DO CONDE' THEN 'SÃO FRANCISCO DO CONDE'
+#               WHEN dim_terri.NO_MUNICIPIO = 'SIMOES FILHO' THEN 'SIMÕES FILHO'
+#               WHEN dim_terri.NO_MUNICIPIO = 'SANTA TEREZINHA' THEN 'SANTA TERESINHA'
+#               ELSE dim_terri.NO_MUNICIPIO END AS NO_MUNICIPIO, 
+#        caged_final.CO_CBO,
+#        caged_final.CO_CBO_FAMILIA,
+#        caged_final.SALARIO_MEDIO,
+#        caged_final.SALARIO_ADMITIDOS AS SALARIO_ADMITIDOS,
+#        caged_final.SALARIO_DESLIGADOS AS SALARIO_DESLIGADOS,
+#        caged_final.SUM_ADMITIDOS,
+#        caged_final.SUM_DESLIGADOS
          
-FROM CAGED_BAHIA_CTE caged_final
-LEFT JOIN DB_OBSERVATORIO.referencia.dimensao_territorio_territorio_identidade dim_terri ON caged_final.municipio = dim_terri.CO_MUN_IBGE_6
-;''')
+# FROM CAGED_BAHIA_CTE caged_final
+# LEFT JOIN DB_OBSERVATORIO.referencia.dimensao_territorio_territorio_identidade dim_terri ON caged_final.municipio = dim_terri.CO_MUN_IBGE_6
+# ;''')
 
-df_caged['NO_MUNICIPIO_COD'] = limpar_texto(df_caged['NO_MUNICIPIO'])
-df_caged_1 = df_caged.merge(municipio_unid[['MUNICIPIO','UNIDADE','MUNICIPIO_COD']], 
-                            left_on='NO_MUNICIPIO_COD', right_on='MUNICIPIO_COD', how='left').drop(
-                                columns=['MUNICIPIO_COD','NO_MUNICIPIO', 'NO_MUNICIPIO_COD'], errors='ignore')
-df_caged_1['CBO_UNIDADE'] = (df_caged_1['CO_CBO'] + df_caged_1['UNIDADE'])
-df_caged_2 = df_caged_1.groupby(['ANO', 'UNIDADE', 'CO_CBO','CBO_UNIDADE'], as_index=False).agg({'SALARIO_ADMITIDOS':'mean', 
-                                                                                                 'SALARIO_DESLIGADOS':'mean',
-                                                                                                 'SALARIO_MEDIO':'mean',
-                                                                                                 'SUM_ADMITIDOS':'sum',
-                                                                                                 'SUM_DESLIGADOS':'sum'
-                                                                                                 })
-df_caged_2['SALDO_EMPREGO'] = df_caged_2['SUM_ADMITIDOS'] - df_caged_2['SUM_DESLIGADOS']
-# df_caged_2 = pd.read_excel(r"C:\Users\anderson.pereira\OneDrive - Sistema FIEB\Inteligência de Mercado\Data Science\DeploymentML\Streamlit_dsim_ML\df_caged_2.xlsx")
+# df_caged['NO_MUNICIPIO_COD'] = limpar_texto(df_caged['NO_MUNICIPIO'])
+# df_caged_1 = df_caged.merge(municipio_unid[['MUNICIPIO','UNIDADE','MUNICIPIO_COD']], 
+#                             left_on='NO_MUNICIPIO_COD', right_on='MUNICIPIO_COD', how='left').drop(
+#                                 columns=['MUNICIPIO_COD','NO_MUNICIPIO', 'NO_MUNICIPIO_COD'], errors='ignore')
+# df_caged_1['CBO_UNIDADE'] = (df_caged_1['CO_CBO'] + df_caged_1['UNIDADE'])
+# df_caged_2 = df_caged_1.groupby(['ANO', 'UNIDADE', 'CO_CBO','CBO_UNIDADE'], as_index=False).agg({'SALARIO_ADMITIDOS':'mean', 
+#                                                                                                  'SALARIO_DESLIGADOS':'mean',
+#                                                                                                  'SALARIO_MEDIO':'mean',
+#                                                                                                  'SUM_ADMITIDOS':'sum',
+#                                                                                                  'SUM_DESLIGADOS':'sum'
+#                                                                                                  })
+# df_caged_2['SALDO_EMPREGO'] = df_caged_2['SUM_ADMITIDOS'] - df_caged_2['SUM_DESLIGADOS']
+df_caged_2 = pd.read_excel(r"C:\Users\anderson.pereira\OneDrive - Sistema FIEB\Inteligência de Mercado\Data Science\DeploymentML\Streamlit_dsim_ML\df_caged_2.xlsx")
+
 
 ####################################################################################################
 # >>>>>>> - FONTE SISTEC - <<<<<<< #
-
-caminho_pasta = r"C:\Users\anderson.pereira\OneDrive - Sistema FIEB\Inteligência de Mercado\Base de Dados - PS\Cubo_CHP"
-
-padrao_arquivos = os.path.join(caminho_pasta, "*.xlsx")
-lista_arquivos = glob.glob(padrao_arquivos)
-
-print(f"Arquivos encontrados: {len(lista_arquivos)}")
-for arq in lista_arquivos:
-    print(arq)
+# caminho_pasta = r"C:\Users\anderson.pereira\OneDrive - Sistema FIEB\Inteligência de Mercado\Base de Dados - PS\Cubo_CHP"
+# padrao_arquivos = os.path.join(caminho_pasta, "*.xlsx")
+# lista_arquivos = glob.glob(padrao_arquivos)
+# print(f"Arquivos encontrados: {len(lista_arquivos)}")
+# for arq in lista_arquivos:
+#     print(arq)
 
 
-lista_df = []
-for arquivo in lista_arquivos:
-    df_temp = pd.read_excel(arquivo, sheet_name='Sheet', header=0)
-    lista_df.append(df_temp)
+# lista_df = []
+# for arquivo in lista_arquivos:
+#     df_temp = pd.read_excel(arquivo, sheet_name='Sheet', header=0)
+#     lista_df.append(df_temp)
 
-dataset_CHP_PS = pd.concat(lista_df, ignore_index=True)
+# dataset_CHP_PS = pd.concat(lista_df, ignore_index=True)
 
-colunas_filtrar = [
-    'TIPO_ALUNO', 'TIPO_MATRICULA', 'SITUACAO_CURSO', 'SITUAÇÃO_MAT_PERIODO_LETIVO', 'TIPO_GRATUIDADE','UNIDADE', 'CURSO',
-    'MODALIDADE', 'TURNO', 'PERIODO_LETIVO', 'PERIODO_ALUNO', 'IDADE', 'CPF', 'RA', 'SEXO', 'CIDADE']
+# colunas_filtrar = [
+#     'TIPO_ALUNO', 'TIPO_MATRICULA', 'SITUACAO_CURSO', 'SITUAÇÃO_MAT_PERIODO_LETIVO', 'TIPO_GRATUIDADE','UNIDADE', 'CURSO',
+#     'MODALIDADE', 'TURNO', 'PERIODO_LETIVO', 'PERIODO_ALUNO', 'IDADE', 'CPF', 'RA', 'SEXO', 'CIDADE']
 
-colunas_existentes = [c for c in colunas_filtrar if c in dataset_CHP_PS.columns]
-mascara_valida = pd.Series([True] * len(dataset_CHP_PS), index=dataset_CHP_PS.index)
+# colunas_existentes = [c for c in colunas_filtrar if c in dataset_CHP_PS.columns]
+# mascara_valida = pd.Series([True] * len(dataset_CHP_PS), index=dataset_CHP_PS.index)
 
-for col in colunas_existentes:
-    serie_col = dataset_CHP_PS[col].astype(str).str.strip().str.lower()
-    eh_total = serie_col.str.contains(r'\btotal\b', na = False)
-    mascara_valida = mascara_valida & ~eh_total
-dataset_CHP_PS = dataset_CHP_PS[mascara_valida].reset_index(drop=True)
-cols_numericas = dataset_CHP_PS.select_dtypes(include=['number']).columns
-dataset_CHP_PS[cols_numericas] = dataset_CHP_PS[cols_numericas].fillna(0)
+# for col in colunas_existentes:
+#     serie_col = dataset_CHP_PS[col].astype(str).str.strip().str.lower()
+#     eh_total = serie_col.str.contains(r'\btotal\b', na = False)
+#     mascara_valida = mascara_valida & ~eh_total
+# dataset_CHP_PS = dataset_CHP_PS[mascara_valida].reset_index(drop=True)
+# cols_numericas = dataset_CHP_PS.select_dtypes(include=['number']).columns
+# dataset_CHP_PS[cols_numericas] = dataset_CHP_PS[cols_numericas].fillna(0)
 
-condicoes = [
-    dataset_CHP_PS["IDADE"].isna() | (dataset_CHP_PS["IDADE"] <= 14),
-    dataset_CHP_PS["IDADE"] <= 17,
-    dataset_CHP_PS["IDADE"] <= 24,
-    dataset_CHP_PS["IDADE"] <= 30,
-    dataset_CHP_PS["IDADE"] <= 39,
-    dataset_CHP_PS["IDADE"] <= 50,
-    dataset_CHP_PS["IDADE"] <= 59,
-    dataset_CHP_PS["IDADE"] >= 60
-]
+# condicoes = [
+#     dataset_CHP_PS["IDADE"].isna() | (dataset_CHP_PS["IDADE"] <= 14),
+#     dataset_CHP_PS["IDADE"] <= 17,
+#     dataset_CHP_PS["IDADE"] <= 24,
+#     dataset_CHP_PS["IDADE"] <= 30,
+#     dataset_CHP_PS["IDADE"] <= 39,
+#     dataset_CHP_PS["IDADE"] <= 50,
+#     dataset_CHP_PS["IDADE"] <= 59,
+#     dataset_CHP_PS["IDADE"] >= 60
+# ]
 
-faixas = [
-    "Menor de 14 anos",
-    "14 a 17",
-    "18 a 24",
-    "25 a 30",
-    "31 a 39",
-    "40 a 50",
-    "51 a 59",
-    "+ 60"
-]
+# faixas = [
+#     "Menor de 14 anos",
+#     "14 a 17",
+#     "18 a 24",
+#     "25 a 30",
+#     "31 a 39",
+#     "40 a 50",
+#     "51 a 59",
+#     "+ 60"
+# ]
 
-# dataset_CHP_PS["FAIXA_ETARIA"] = np.select(condicoes, faixas, default="Sem faixa")
+# # dataset_CHP_PS["FAIXA_ETARIA"] = np.select(condicoes, faixas, default="Sem faixa")
 
-dataset_CHP_PS["UNIDADE"] = dataset_CHP_PS["UNIDADE"].str.replace(r"^SENAI\s+", "", regex=True)
-dataset_CHP_PS["UNIDADE"] = dataset_CHP_PS["UNIDADE"].str.replace(r"\bDENDEZEIROS\b|\bCIMATEC\b", "SALVADOR", regex=True)
-dataset_CHP_PS["UNIDADE"] = dataset_CHP_PS["UNIDADE"].str.strip()
-dataset_CHP_PS['ANO'] = dataset_CHP_PS['PERIODO_LETIVO'].astype(str).str[:4].astype(int)
-dataset_CHP_PS['CPF_E_RA'] = dataset_CHP_PS['CPF'].astype(str) + dataset_CHP_PS['RA'].astype(str)
-dataset_CHP_PS['MATRICULAS'] = 1
-dataset_CHP_PS['CIDADE'] = dataset_CHP_PS['CIDADE'].str.strip().str.upper()
-dataset_CHP_PS['CIDADE'] = np.where(dataset_CHP_PS['CIDADE'] == 'ARAÇAS', 'ARAÇÁS', 
-                                        np.where(dataset_CHP_PS['CIDADE'] == 'SANTO ESTEVÃO', 'SANTO ESTÊVÃO', 
-                                                 np.where(dataset_CHP_PS['CIDADE'] == 'SAO SEBASTIAO DO PASSE', 'SÃO SEBASTIÃO DO PASSÉ',
-                                                          np.where(dataset_CHP_PS['CIDADE'] == 'NOVO HORIZONTE', 'CAMAÇARI',
-                                                                   np.where(dataset_CHP_PS['CIDADE'] == 'PETROLINA', 'JUAZEIRO',
-                                                                            np.where(dataset_CHP_PS['CIDADE'] == 'PORTO ALEGRE DO TOCANTINS', 'LUÍS EDUARDO MAGALHÃES',
-                                                                                     np.where(dataset_CHP_PS['CIDADE'] == 'TAMBAÚ', 'CAMAÇARI',
-                                                                                     dataset_CHP_PS['CIDADE'])))))))
-dataset_CHP_PS['CIDADE_COD'] = limpar_texto(dataset_CHP_PS['CIDADE'])
-dataset_CHP_PS = dataset_CHP_PS.drop(columns=['MUNICIPIO'], errors='ignore')
+# dataset_CHP_PS["UNIDADE"] = dataset_CHP_PS["UNIDADE"].str.replace(r"^SENAI\s+", "", regex=True)
+# dataset_CHP_PS["UNIDADE"] = dataset_CHP_PS["UNIDADE"].str.replace(r"\bDENDEZEIROS\b|\bCIMATEC\b", "SALVADOR", regex=True)
+# dataset_CHP_PS["UNIDADE"] = dataset_CHP_PS["UNIDADE"].str.strip()
+# dataset_CHP_PS['ANO'] = dataset_CHP_PS['PERIODO_LETIVO'].astype(str).str[:4].astype(int)
+# dataset_CHP_PS['CPF_E_RA'] = dataset_CHP_PS['CPF'].astype(str) + dataset_CHP_PS['RA'].astype(str)
+# dataset_CHP_PS['MATRICULAS'] = 1
+# dataset_CHP_PS['CIDADE'] = dataset_CHP_PS['CIDADE'].str.strip().str.upper()
+# dataset_CHP_PS['CIDADE'] = np.where(dataset_CHP_PS['CIDADE'] == 'ARAÇAS', 'ARAÇÁS', 
+#                                         np.where(dataset_CHP_PS['CIDADE'] == 'SANTO ESTEVÃO', 'SANTO ESTÊVÃO', 
+#                                                  np.where(dataset_CHP_PS['CIDADE'] == 'SAO SEBASTIAO DO PASSE', 'SÃO SEBASTIÃO DO PASSÉ',
+#                                                           np.where(dataset_CHP_PS['CIDADE'] == 'NOVO HORIZONTE', 'CAMAÇARI',
+#                                                                    np.where(dataset_CHP_PS['CIDADE'] == 'PETROLINA', 'JUAZEIRO',
+#                                                                             np.where(dataset_CHP_PS['CIDADE'] == 'PORTO ALEGRE DO TOCANTINS', 'LUÍS EDUARDO MAGALHÃES',
+#                                                                                      np.where(dataset_CHP_PS['CIDADE'] == 'TAMBAÚ', 'CAMAÇARI',
+#                                                                                      dataset_CHP_PS['CIDADE'])))))))
+# dataset_CHP_PS['CIDADE_COD'] = limpar_texto(dataset_CHP_PS['CIDADE'])
+# dataset_CHP_PS = dataset_CHP_PS.drop(columns=['MUNICIPIO'], errors='ignore')
 
-dataset_CHP_PS_0 = dataset_CHP_PS.merge(municipio_unid[['MUNICIPIO','MUNICIPIO_COD']], left_on='CIDADE_COD', right_on='MUNICIPIO_COD', how='left').drop(
-                                columns=['MUNICIPIO_COD','CIDADE', 'CIDADE_COD'], errors='ignore')
+# dataset_CHP_PS_0 = dataset_CHP_PS.merge(municipio_unid[['MUNICIPIO','MUNICIPIO_COD']], left_on='CIDADE_COD', right_on='MUNICIPIO_COD', how='left').drop(
+#                                 columns=['MUNICIPIO_COD','CIDADE', 'CIDADE_COD'], errors='ignore')
 
-df_CHP = dataset_CHP_PS_0.groupby(['ANO', 'UNIDADE','CURSO'],as_index=False).agg({'MATRICULAS':'sum'})
-# df_CHP = dataset_CHP_PS_0.groupby(['ANO', 'UNIDADE', 'MUNICIPIO','CURSO', 'TURNO','FAIXA_ETARIA'],as_index=False).agg({'MATRICULAS':'sum'})
-df_CHP.columns = df_CHP.columns.str.strip()
+# df_CHP = dataset_CHP_PS_0.groupby(['ANO', 'UNIDADE','CURSO'],as_index=False).agg({'MATRICULAS':'sum'})
+# # df_CHP = dataset_CHP_PS_0.groupby(['ANO', 'UNIDADE', 'MUNICIPIO','CURSO', 'TURNO','FAIXA_ETARIA'],as_index=False).agg({'MATRICULAS':'sum'})
+# df_CHP.columns = df_CHP.columns.str.strip()
 
-ano_ref = 2025
-df_CHP_Pagante_menor_ = df_CHP[df_CHP['ANO'] <= ano_ref]
-df_CHP_Pagante_igual_ = df_CHP_Pagante_menor_.copy(deep=True)
-df_CHP_Pagante_igual_['CURSO'] = df_CHP_Pagante_igual_['CURSO'].str.upper()
-df_CHP_Pagante_igual_['CURSO'] = (df_CHP_Pagante_igual_['CURSO'].str.replace(r'^TÉCNICO\s+EM\s+', '', regex=True, flags=re.IGNORECASE).str.strip().str.upper())
-df_CHP_Pagante_igual_['UNIDADE'] = df_CHP_Pagante_igual_['UNIDADE'].replace({'LEM':'LUÍS EDUARDO MAGALHÃES','FEIRA':'FEIRA DE SANTANA','CONQUISTA':'VITÓRIA DA CONQUISTA'})
+# ano_ref = 2025
+# df_CHP_Pagante_menor_ = df_CHP[df_CHP['ANO'] <= ano_ref]
+# df_CHP_Pagante_igual_ = df_CHP_Pagante_menor_.copy(deep=True)
+# df_CHP_Pagante_igual_['CURSO'] = df_CHP_Pagante_igual_['CURSO'].str.upper()
+# df_CHP_Pagante_igual_['CURSO'] = (df_CHP_Pagante_igual_['CURSO'].str.replace(r'^TÉCNICO\s+EM\s+', '', regex=True, flags=re.IGNORECASE).str.strip().str.upper())
+# df_CHP_Pagante_igual_['UNIDADE'] = df_CHP_Pagante_igual_['UNIDADE'].replace({'LEM':'LUÍS EDUARDO MAGALHÃES','FEIRA':'FEIRA DE SANTANA','CONQUISTA':'VITÓRIA DA CONQUISTA'})
 
 ####################################################################################################
 # >>>>>>> - FONTE INEP - <<<<<<< #
-df_curso_tec_inep = consulta('''
-WITH INEP_BA_CTE AS (
-SELECT
-      inep_tec.NU_ANO_CENSO AS ANO
-      ,inep_tec.CO_MUNICIPIO
-      ,CASE WHEN inep_tec.TP_DEPENDENCIA = 4 THEN 'PRIVADA' ELSE 'PÚBLICA' END DEPEND_ADM
-      ,inep_tec.NO_ENTIDADE
-    --   ,inep_tec.CO_ENTIDADE
-      ,UPPER(inep_tec.NO_CURSO_EDUC_PROFISSIONAL) CURSO
-    --   ,inep_tec.QT_MAT_CURSO_TEC -- Matrículas em CTEP (Curso Técnico em Educação Profisisonal) Total
-    -- Matrículas em CTEP = Educação Profissional + Concomitante + Subsequente:
-      ,(inep_tec.QT_MAT_CURSO_TEC_CT + inep_tec.QT_MAT_CURSO_TEC_CONC + inep_tec.QT_MAT_TEC_SUBS) QTD_MAT
-FROM DB_OBSERVATORIO.educacao.censo_escolar_ed_tecnica inep_tec
-WHERE 
-    inep_tec.TP_LOCALIZACAO_DIFERENCIADA in ('0') 
-    AND inep_tec.NO_ENTIDADE NOT LIKE ('%SENAI%')
-    AND inep_tec.NO_CURSO_EDUC_PROFISSIONAL IS NOT NULL
-    AND UPPER(inep_tec.NO_CURSO_EDUC_PROFISSIONAL) NOT LIKE ('%MAGISTÉRIO%')
--- ORDER BY  inep_tec.NU_ANO_CENSO DESC
-)
-SELECT 
-    inep.ANO,
-    CASE WHEN dim_terri.NO_MUNICIPIO = 'CAMACARI' THEN 'CAMAÇARI'
-        WHEN dim_terri.NO_MUNICIPIO = 'EUNAPOLIS' THEN 'EUNÁPOLIS'
-        WHEN dim_terri.NO_MUNICIPIO = 'ILHEUS' THEN 'ILHÉUS'
-        WHEN dim_terri.NO_MUNICIPIO = 'VITORIA DA CONQUISTA' THEN 'VITÓRIA DA CONQUISTA'
-        WHEN dim_terri.NO_MUNICIPIO = 'JEQUIE' THEN 'JEQUIÉ'
-        WHEN dim_terri.NO_MUNICIPIO = 'LUIS EDUARDO MAGALHAES' THEN 'LUÍS EDUARDO MAGALHÃES'
-        WHEN dim_terri.NO_MUNICIPIO = 'SENHOR DO BONFIN' THEN 'SENHOR DO BONFIM'
-        WHEN dim_terri.NO_MUNICIPIO = 'SANTO ANTONIO DE JESUS' THEN 'SANTO ANTÔNIO DE JESUS'
-        WHEN dim_terri.NO_MUNICIPIO = 'SAO GONCALO DOS CAMPOS' THEN 'SÃO GONÇALO DOS CAMPOS'
-        WHEN dim_terri.NO_MUNICIPIO = 'SAO SEBASTIAO DO PASSE' THEN 'SÃO SEBASTIÃO DO PASSE'
-        WHEN dim_terri.NO_MUNICIPIO = 'SAO FELIPE' THEN 'SÃO FELIPE'
-        WHEN dim_terri.NO_MUNICIPIO = 'SAO FRANCISCO DO CONDE' THEN 'SÃO FRANCISCO DO CONDE'
-        WHEN dim_terri.NO_MUNICIPIO = 'SIMOES FILHO' THEN 'SIMÕES FILHO' ELSE dim_terri.NO_MUNICIPIO END AS NO_MUNICIPIO,
-    inep.CURSO,
-    CASE
-        WHEN inep.NO_ENTIDADE = 'CENTRO ESTADUAL DE EDUCACAO PROFISSIONAL' THEN 'CEEP'
-        WHEN inep.NO_ENTIDADE = 'CENTRO EST DE ED PROFISSIONAL' THEN 'CEEP'
-        WHEN inep.NO_ENTIDADE = 'CENTRO EST DE EDUC PROFISSIONAL' THEN 'CEEP'
-        WHEN inep.NO_ENTIDADE = 'CENTRO TERRITORIAL DE EDUCAÇÃO PROFISSIONAL' THEN 'CTEP'
-        WHEN inep.NO_ENTIDADE = 'CENTRO DE EDUCAÇÃO PROFISSIONAL COMÉRCIO' THEN 'SENAC'
-        WHEN inep.NO_ENTIDADE = 'CENTRO DE EDUCAÇÃO PROFISSIONAL SENAC CASA DO COMÉRCIO' THEN 'SENAC'
-        WHEN inep.NO_ENTIDADE = 'CENTRO DE EDUCAÇÃO PROFISSIONAL SENAC LAURO DE FREITAS' THEN 'SENAC'
-        WHEN inep.NO_ENTIDADE = 'CENTRO DE EDUCAÇÃO PROFISSIONAL DE ALAGOINHAS CEP ALH' THEN 'SENAC'
-        WHEN inep.NO_ENTIDADE LIKE '%SENAC%' THEN 'SENAC'
-        WHEN inep.NO_ENTIDADE = 'CENTRO DE EDUCACAO PROFISSIONAL' THEN 'CEP'
-        WHEN inep.NO_ENTIDADE = 'CENTRO EDUCACIONAL MUNICIPAL' THEN 'CEM'
-        WHEN inep.NO_ENTIDADE = 'CENTRO DE EDUCACAO' THEN 'CE'
-        WHEN inep.NO_ENTIDADE = 'CENTRO EDUCACIONAL' THEN 'CE'
-        WHEN inep.NO_ENTIDADE = 'CASA FAMILIAR AGROFLORESTAL' THEN 'CFA'
-        WHEN inep.NO_ENTIDADE = 'CASA FAMILIAR RURAL' THEN 'CFR'
-        WHEN inep.NO_ENTIDADE = 'CENTRO DE ENSINO GRAU T UNIDADE CAJAZEIRAS' THEN 'GRAU TÉCNICO'
-        WHEN inep.NO_ENTIDADE LIKE '%GRAU TÉCNICO%' THEN 'GRAU TÉCNICO'
-        WHEN inep.NO_ENTIDADE LIKE '%GRAUTECNICO%' THEN 'GRAU TÉCNICO'
-        WHEN inep.NO_ENTIDADE LIKE '%GRAU TECNICO%' THEN 'GRAU TÉCNICO'
-        WHEN inep.NO_ENTIDADE = 'CENTRO DE EXCELÊNCIA EM FRUTICULTURA' THEN 'SENAR'
-        WHEN inep.NO_ENTIDADE LIKE '%SENART%' THEN 'SENART'
-        WHEN inep.NO_ENTIDADE LIKE '%CRUZEIRO DO SUL%' THEN 'UNICSUL'
-        WHEN inep.NO_ENTIDADE LIKE '%UNICSUL%' THEN 'UNICSUL'
-        WHEN inep.NO_ENTIDADE LIKE '%SE7E CENTRO%' THEN 'SE7E CENTRO TECNOLÓGICO'
-        WHEN inep.NO_ENTIDADE = 'PROCURSOS SERVIÇOS DE EDUCAÇÃO' THEN 'PROCURSOS'
-        WHEN inep.NO_ENTIDADE = 'CENTRO DE ESTUDOS TÉCNICOS, TREINAMENTOS PROFISSIONAIS E SERVIÇOS - CETTPS' THEN 'CETTP''S - CETTPS'
-        WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL CARLITO DE CARVALHO%' THEN 'COLEGIO ESTADUAL CARLITO DE CARVALHO'
-        WHEN inep.NO_ENTIDADE LIKE '%CENTRO ESTADUAL DE EDUCACAO PROFISSIONAL AGUAS%' THEN 'CENTRO ESTADUAL DE EDUCACAO PROFISSIONAL AGUAS'
-        WHEN inep.NO_ENTIDADE LIKE '%CENTRO ESTADUAL DE EDUCACAO PROFISSIONAL DO SEMI ARIDO%' THEN 'CENTRO ESTADUAL DE EDUCACAO PROFISSIONAL DO SEMI ARIDO'
-        WHEN inep.NO_ENTIDADE LIKE '%CENTRO TERRITORIAL DE EDUCACAO PROFISSIONAL DA BACIA DO JACUIPE IIIEDNA DALTRO EM TEMPO INTEGRAL%' THEN 'CENTRO TERRITORIAL DE EDUCACAO PROFISSIONAL DA BACIA DO JACUIPE IIIEDNA DALTRO'
-        WHEN inep.NO_ENTIDADE LIKE '%CENTRO TERRITORIAL DE EDUCACAO PROFISSIONAL DA CHAPADA DIAMANTINA TEMPO INTEGRAL%' THEN 'CENTRO TERRITORIAL DE EDUCACAO PROFISSIONAL DA CHAPADA DIAMANTINA'
-        WHEN inep.NO_ENTIDADE LIKE '%CENTRO TERRITORIAL DE EDUCACAO PROFISSIONAL DE MEDEIROS NETO TEMPO INTEGRAL%' THEN 'CENTRO TERRITORIAL DE EDUCACAO PROFISSIONAL DE MEDEIROS NETO'
-        WHEN inep.NO_ENTIDADE LIKE '%COLEGIO DEMOCRATICO ESTADUAL ANISIO TEIXEIRA TEMPO INTEGRAL%' THEN 'COLEGIO DEMOCRATICO ESTADUAL ANISIO TEIXEIRA'
-        WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL ANTONIO CARLOS MAGALHAES TEMPO INTEGRAL%' THEN 'COLEGIO ESTADUAL ANTONIO CARLOS MAGALHAES'
-        WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL ANTONIO RODRIGUES VIANA TEMPO INTEGRAL%' THEN 'COLEGIO ESTADUAL ANTONIO RODRIGUES VIANA'
-        WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL ARISTIDES CEDRAZ DE OLIVEIRA TEMPO INTEGRAL%' THEN 'COLEGIO ESTADUAL ARISTIDES CEDRAZ DE OLIVEIRA'
-        WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL CONCEICAO DO JACUIPE TEMPO INTEGRAL%' THEN 'COLEGIO ESTADUAL CONCEICAO DO JACUIPE'
-        WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL DE BOQUIRA TEMPO INTEGRAL%' THEN 'COLEGIO ESTADUAL DE BOQUIRA'
-        WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL DE COCOS TEMPO INTEGRAL' THEN 'COLEGIO ESTADUAL DE COCOS'
-        WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL DE CONCEICAO DA FEIRA CECF TEMPO INTEGRAL%' THEN 'COLEGIO ESTADUAL DE CONCEICAO DA FEIRA CECF'
-        WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL DE CORRENTINA %' THEN 'COLEGIO ESTADUAL DE CORRENTINA'
-        WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL DE IBIQUERA TEMPO INTEGRAL%' THEN 'COLEGIO ESTADUAL DE IBIQUERA'
-        WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL DE JEQUIE TEMPO INTEGRAL%' THEN 'COLEGIO ESTADUAL DE JEQUIE'
-        WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL DE MALHADA DE PEDRAS TEMPO INTEGRAL%' THEN 'COLEGIO ESTADUAL DE MALHADA DE PEDRAS'
-        WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL DE TEMPO INTEGRAL RUI BARBOSA TEMPO INTEGRAL%' THEN 'COLEGIO ESTADUAL DE RUI BARBOSA'
-        WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL DEMOCRATICO QUITERIA MARIA DE JESUS TEMPO INTEGRAL%' THEN 'COLEGIO ESTADUAL DEMOCRATICO QUITERIA MARIA DE JESUS'
-        WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL DINAH GONCALVES TEMPO INTEGRAL%' THEN 'COLEGIO ESTADUAL DINAH GONCALVES'
-        WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL DO CAMPO ANNA JUNQUEIRA AYRES TOURINHO TEMPO INTEGRAL DISTRITO DE MATARIPE%' THEN 'COLEGIO ESTADUAL DO CAMPO ANNA JUNQUEIRA AYRES TOURINHO DISTRITO DE MATARIPE'
-        WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL DO CAMPO DE CARNAIBA TEMPO INTEGRAL DISTRITO DE CARNAIBA%' THEN 'COLEGIO ESTADUAL DO CAMPO DE CARNAIBA DISTRITO DE CARNAIBA'
-        WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL DO CAMPO MIGUEL MOREIRA DE CARVALHO DIST RODA VELHA%' THEN 'COLEGIO ESTADUAL DO CAMPO MIGUEL MOREIRA DE CARVALHO DIST RODA VELHA'
-        WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL DO CAMPO JORGE CALMON DISTRITO DE OLIVENCA TEMPO INTEGRAL%' THEN 'COLEGIO ESTADUAL DO CAMPO JORGE CALMON DISTRITO DE OLIVENCA'
-        WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL DO CAMPO MIGUEL MOREIRA DE CARVALHO DIST RODA VELHA%' THEN 'COLEGIO ESTADUAL DO CAMPO MIGUEL MOREIRA DE CARVALHO DISTRITO DE RODA VELHA'
-        WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL DO STIEP CARLOS MARIGHELLA TEMPO INTEGRAL%' THEN 'COLEGIO ESTADUAL DO STIEP CARLOS MARIGHELLA'
-        WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL DOM PEDRO I TEMPO INTEGRAL%' THEN 'COLEGIO ESTADUAL DOM PEDRO I'
-        WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL DR ANTONIO CARLOS MAGALHAES TEMPO INTEGRAL%' THEN 'COLEGIO ESTADUAL DR ANTONIO CARLOS MAGALHAES'
-        WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL DOUTOR IVES ORLANDO LOPES DA SILVA TEMPO INTEGRAL%' THEN 'COLEGIO ESTADUAL DOUTOR IVES ORLANDO LOPES DA SILVA'
-        WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL DOUTOR JOSE ANTONIO DE ARAUJO PIMENTA TEMPO INTEGRAL%' THEN 'COLEGIO ESTADUAL DOUTOR JOSE ANTONIO DE ARAUJO PIMENTA'
-        WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL EDVALDO FLORES TEMPO INTEGRAL%' THEN 'COLEGIO ESTADUAL EDVALDO FLORES'
-        WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL ERALDO TINOCO TEMPO INTEGRAL%' THEN 'COLEGIO ESTADUAL ERALDO TINOCO'
-        WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL ERNESTO CARNEIRO RIBEIRO TEMPO INTEGRAL%' THEN 'COLEGIO ESTADUAL ERNESTO CARNEIRO RIBEIRO'
-        WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL EVANDRO BRANDAO TEMPO INTEGRAL%' THEN 'COLEGIO ESTADUAL EVANDRO BRANDAO'
-        WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL GENTIL PARAISO MARTINS TEMPO INTEGRAL%' THEN 'COLEGIO ESTADUAL GENTIL PARAISO MARTINS'
-        WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL GOVERNADOR LUIZ VIANA FILHO TEMPO INTEGRAL%' THEN 'COLEGIO ESTADUAL GOVERNADOR LUIZ VIANA FILHO'
-        WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL GRANDES MESTRES BRASILEIROS EM TEMPO INTEGRAL%' THEN 'COLEGIO ESTADUAL GRANDES MESTRES BRASILEIROS'
-        WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL GRANDES MESTRES BRASILEIROS TEMPO INTEGRAL%' THEN 'COLEGIO ESTADUAL GRANDES MESTRES BRASILEIROS'
-        WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL JOAO BENEVIDES NOGUEIRA EM TEMPO INTEGRAL%' THEN 'COLEGIO ESTADUAL JOAO BENEVIDES NOGUEIRA'
-        WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL JOAO BENEVIDES NOGUEIRA TEMPO INTEGRAL%' THEN 'COLEGIO ESTADUAL JOAO BENEVIDES NOGUEIRA'
-        WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL JORGE CALMON DISTRITO DE OLIVENCA TEMPO INTEGRAL%' THEN 'COLEGIO ESTADUAL JORGE CALMON DISTRITO DE OLIVENCA'
-        WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL JOSE DANTAS DE SOUZA TEMPO INTEGRAL%' THEN 'COLEGIO ESTADUAL JOSE DANTAS DE SOUZA'
-        WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL JOSE DE FREITAS MASCARENHAS TEMPO INTEGRAL%' THEN 'COLEGIO ESTADUAL JOSE DE FREITAS MASCARENHAS'
-        WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL JOSE RIBEIRO DE ARAUJO TEMPO INTEGRAL%' THEN 'COLEGIO ESTADUAL JOSE RIBEIRO DE ARAUJO'
-        WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL JOSE RIBEIRO PAMPONET TEMPO INTEGRAL%' THEN 'COLEGIO ESTADUAL JOSE RIBEIRO PAMPONET'
-        WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL JOSE VICENTE LEAL EM TEMPO INTEGRAL%' THEN 'COLEGIO ESTADUAL JOSE VICENTE LEAL'
-        WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL JOSE VICENTE LEAL TEMPO INTEGRAL%' THEN 'COLEGIO ESTADUAL JOSE VICENTE LEAL'
-        WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL LUIS EDUARDO MAGALHAES TEMPO INTEGRAL%' THEN 'COLEGIO ESTADUAL LUIS EDUARDO MAGALHAES'
-        WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL LUIS NAVARRO DE BRITO TEMPO INTEGRAL%' THEN 'COLEGIO ESTADUAL LUIS NAVARRO DE BRITO'
-        WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL LUIZ ROGERIO DE SOUZA TEMPO INTEGRAL%' THEN 'COLEGIO ESTADUAL LUIZ ROGERIO DE SOUZA'
-        WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL LUIZ VIANA FILHO TEMPO INTEGRAL%' THEN 'COLEGIO ESTADUAL LUIZ VIANA FILHO'
-        WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL LUIZ VIANA TEMPO INTEGRAL%' THEN 'COLEGIO ESTADUAL LUIZ VIANA'
-        WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL MANDINHO DE SOUZA ALMEIDA TEMPO INTEGRAL%' THEN 'COLEGIO ESTADUAL MANDINHO DE SOUZA ALMEIDA'
-        WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL MANOEL FRANCISCO DE CAIRES EM TEMPO INTEGRAL%' THEN 'COLEGIO ESTADUAL MANOEL FRANCISCO DE CAIRES'
-        WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL MARIA OTILIA LUTZ - BAIRRO JARDIM DAS ACACIAS - TEMPO INTEGRAL%' THEN 'COLEGIO ESTADUAL MARIA OTILIA LUTZ - BAIRRO JARDIM DAS ACACIAS'
-        WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL MARIA OTILIA LUTZ BAIRRO JARDIM DAS ACACIAS TEMPO INTEGRAL%' THEN 'COLEGIO ESTADUAL MARIA OTILIA LUTZ BAIRRO JARDIM DAS ACACIAS'
-        WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL MINISTRO OLIVEIRA BRITO - TEMPO INTEGRAL%' THEN 'COLEGIO ESTADUAL MINISTRO OLIVEIRA BRITO'
-        WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL MINISTRO OLIVEIRA BRITO TEMPO INTEGRAL%' THEN 'COLEGIO ESTADUAL MINISTRO OLIVEIRA BRITO'
-        WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL MONSENHOR TURIBIO VILANOVA TEMPO INTEGRAL%' THEN 'COLEGIO ESTADUAL MONSENHOR TURIBIO VILANOVA'
-        WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL NEMISIA RIBEIRO DOS SANTOS TEMPO INTEGRAL%' THEN 'COLEGIO ESTADUAL NEMISIA RIBEIRO DOS SANTOS'
-        WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL NERCY ANTONIO DUARTE TEMPO INTEGRAL%' THEN 'COLEGIO ESTADUAL NERCY ANTONIO DUARTE'
-        WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL NOSSA SENHORA DA CONCEICAO TEMPO INTEGRAL%' THEN 'COLEGIO ESTADUAL NOSSA SENHORA DA CONCEICAO'
-        WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL NOSSA SENHORA DO ROSARIO TEMPO INTEGRAL%' THEN 'COLEGIO ESTADUAL NOSSA SENHORA DO ROSARIO'
-        WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL OCTACILIO MANOEL GOMES TEMPO INTEGRAL%' THEN 'COLEGIO ESTADUAL OCTACILIO MANOEL GOMES'
-        WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL OLAVO ALVES PINTO%' THEN 'COLEGIO ESTADUAL OLAVO ALVES PINTO'
+# df_curso_tec_inep = consulta('''
+# WITH INEP_BA_CTE AS (
+# SELECT
+#       inep_tec.NU_ANO_CENSO AS ANO
+#       ,inep_tec.CO_MUNICIPIO
+#       ,CASE WHEN inep_tec.TP_DEPENDENCIA = 4 THEN 'PRIVADA' ELSE 'PÚBLICA' END DEPEND_ADM
+#       ,inep_tec.NO_ENTIDADE
+#     --   ,inep_tec.CO_ENTIDADE
+#       ,UPPER(inep_tec.NO_CURSO_EDUC_PROFISSIONAL) CURSO
+#     --   ,inep_tec.QT_MAT_CURSO_TEC -- Matrículas em CTEP (Curso Técnico em Educação Profisisonal) Total
+#     -- Matrículas em CTEP = Educação Profissional + Concomitante + Subsequente:
+#       ,(inep_tec.QT_MAT_CURSO_TEC_CT + inep_tec.QT_MAT_CURSO_TEC_CONC + inep_tec.QT_MAT_TEC_SUBS) QTD_MAT
+# FROM DB_OBSERVATORIO.educacao.censo_escolar_ed_tecnica inep_tec
+# WHERE 
+#     inep_tec.TP_LOCALIZACAO_DIFERENCIADA in ('0') 
+#     AND inep_tec.NO_ENTIDADE NOT LIKE ('%SENAI%')
+#     AND inep_tec.NO_CURSO_EDUC_PROFISSIONAL IS NOT NULL
+#     AND UPPER(inep_tec.NO_CURSO_EDUC_PROFISSIONAL) NOT LIKE ('%MAGISTÉRIO%')
+# -- ORDER BY  inep_tec.NU_ANO_CENSO DESC
+# )
+# SELECT 
+#     inep.ANO,
+#     CASE WHEN dim_terri.NO_MUNICIPIO = 'CAMACARI' THEN 'CAMAÇARI'
+#         WHEN dim_terri.NO_MUNICIPIO = 'EUNAPOLIS' THEN 'EUNÁPOLIS'
+#         WHEN dim_terri.NO_MUNICIPIO = 'ILHEUS' THEN 'ILHÉUS'
+#         WHEN dim_terri.NO_MUNICIPIO = 'VITORIA DA CONQUISTA' THEN 'VITÓRIA DA CONQUISTA'
+#         WHEN dim_terri.NO_MUNICIPIO = 'JEQUIE' THEN 'JEQUIÉ'
+#         WHEN dim_terri.NO_MUNICIPIO = 'LUIS EDUARDO MAGALHAES' THEN 'LUÍS EDUARDO MAGALHÃES'
+#         WHEN dim_terri.NO_MUNICIPIO = 'SENHOR DO BONFIN' THEN 'SENHOR DO BONFIM'
+#         WHEN dim_terri.NO_MUNICIPIO = 'SANTO ANTONIO DE JESUS' THEN 'SANTO ANTÔNIO DE JESUS'
+#         WHEN dim_terri.NO_MUNICIPIO = 'SAO GONCALO DOS CAMPOS' THEN 'SÃO GONÇALO DOS CAMPOS'
+#         WHEN dim_terri.NO_MUNICIPIO = 'SAO SEBASTIAO DO PASSE' THEN 'SÃO SEBASTIÃO DO PASSE'
+#         WHEN dim_terri.NO_MUNICIPIO = 'SAO FELIPE' THEN 'SÃO FELIPE'
+#         WHEN dim_terri.NO_MUNICIPIO = 'SAO FRANCISCO DO CONDE' THEN 'SÃO FRANCISCO DO CONDE'
+#         WHEN dim_terri.NO_MUNICIPIO = 'SIMOES FILHO' THEN 'SIMÕES FILHO' ELSE dim_terri.NO_MUNICIPIO END AS NO_MUNICIPIO,
+#     inep.CURSO,
+#     CASE
+#         WHEN inep.NO_ENTIDADE = 'CENTRO ESTADUAL DE EDUCACAO PROFISSIONAL' THEN 'CEEP'
+#         WHEN inep.NO_ENTIDADE = 'CENTRO EST DE ED PROFISSIONAL' THEN 'CEEP'
+#         WHEN inep.NO_ENTIDADE = 'CENTRO EST DE EDUC PROFISSIONAL' THEN 'CEEP'
+#         WHEN inep.NO_ENTIDADE = 'CENTRO TERRITORIAL DE EDUCAÇÃO PROFISSIONAL' THEN 'CTEP'
+#         WHEN inep.NO_ENTIDADE = 'CENTRO DE EDUCAÇÃO PROFISSIONAL COMÉRCIO' THEN 'SENAC'
+#         WHEN inep.NO_ENTIDADE = 'CENTRO DE EDUCAÇÃO PROFISSIONAL SENAC CASA DO COMÉRCIO' THEN 'SENAC'
+#         WHEN inep.NO_ENTIDADE = 'CENTRO DE EDUCAÇÃO PROFISSIONAL SENAC LAURO DE FREITAS' THEN 'SENAC'
+#         WHEN inep.NO_ENTIDADE = 'CENTRO DE EDUCAÇÃO PROFISSIONAL DE ALAGOINHAS CEP ALH' THEN 'SENAC'
+#         WHEN inep.NO_ENTIDADE LIKE '%SENAC%' THEN 'SENAC'
+#         WHEN inep.NO_ENTIDADE = 'CENTRO DE EDUCACAO PROFISSIONAL' THEN 'CEP'
+#         WHEN inep.NO_ENTIDADE = 'CENTRO EDUCACIONAL MUNICIPAL' THEN 'CEM'
+#         WHEN inep.NO_ENTIDADE = 'CENTRO DE EDUCACAO' THEN 'CE'
+#         WHEN inep.NO_ENTIDADE = 'CENTRO EDUCACIONAL' THEN 'CE'
+#         WHEN inep.NO_ENTIDADE = 'CASA FAMILIAR AGROFLORESTAL' THEN 'CFA'
+#         WHEN inep.NO_ENTIDADE = 'CASA FAMILIAR RURAL' THEN 'CFR'
+#         WHEN inep.NO_ENTIDADE = 'CENTRO DE ENSINO GRAU T UNIDADE CAJAZEIRAS' THEN 'GRAU TÉCNICO'
+#         WHEN inep.NO_ENTIDADE LIKE '%GRAU TÉCNICO%' THEN 'GRAU TÉCNICO'
+#         WHEN inep.NO_ENTIDADE LIKE '%GRAUTECNICO%' THEN 'GRAU TÉCNICO'
+#         WHEN inep.NO_ENTIDADE LIKE '%GRAU TECNICO%' THEN 'GRAU TÉCNICO'
+#         WHEN inep.NO_ENTIDADE = 'CENTRO DE EXCELÊNCIA EM FRUTICULTURA' THEN 'SENAR'
+#         WHEN inep.NO_ENTIDADE LIKE '%SENART%' THEN 'SENART'
+#         WHEN inep.NO_ENTIDADE LIKE '%CRUZEIRO DO SUL%' THEN 'UNICSUL'
+#         WHEN inep.NO_ENTIDADE LIKE '%UNICSUL%' THEN 'UNICSUL'
+#         WHEN inep.NO_ENTIDADE LIKE '%SE7E CENTRO%' THEN 'SE7E CENTRO TECNOLÓGICO'
+#         WHEN inep.NO_ENTIDADE = 'PROCURSOS SERVIÇOS DE EDUCAÇÃO' THEN 'PROCURSOS'
+#         WHEN inep.NO_ENTIDADE = 'CENTRO DE ESTUDOS TÉCNICOS, TREINAMENTOS PROFISSIONAIS E SERVIÇOS - CETTPS' THEN 'CETTP''S - CETTPS'
+#         WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL CARLITO DE CARVALHO%' THEN 'COLEGIO ESTADUAL CARLITO DE CARVALHO'
+#         WHEN inep.NO_ENTIDADE LIKE '%CENTRO ESTADUAL DE EDUCACAO PROFISSIONAL AGUAS%' THEN 'CENTRO ESTADUAL DE EDUCACAO PROFISSIONAL AGUAS'
+#         WHEN inep.NO_ENTIDADE LIKE '%CENTRO ESTADUAL DE EDUCACAO PROFISSIONAL DO SEMI ARIDO%' THEN 'CENTRO ESTADUAL DE EDUCACAO PROFISSIONAL DO SEMI ARIDO'
+#         WHEN inep.NO_ENTIDADE LIKE '%CENTRO TERRITORIAL DE EDUCACAO PROFISSIONAL DA BACIA DO JACUIPE IIIEDNA DALTRO EM TEMPO INTEGRAL%' THEN 'CENTRO TERRITORIAL DE EDUCACAO PROFISSIONAL DA BACIA DO JACUIPE IIIEDNA DALTRO'
+#         WHEN inep.NO_ENTIDADE LIKE '%CENTRO TERRITORIAL DE EDUCACAO PROFISSIONAL DA CHAPADA DIAMANTINA TEMPO INTEGRAL%' THEN 'CENTRO TERRITORIAL DE EDUCACAO PROFISSIONAL DA CHAPADA DIAMANTINA'
+#         WHEN inep.NO_ENTIDADE LIKE '%CENTRO TERRITORIAL DE EDUCACAO PROFISSIONAL DE MEDEIROS NETO TEMPO INTEGRAL%' THEN 'CENTRO TERRITORIAL DE EDUCACAO PROFISSIONAL DE MEDEIROS NETO'
+#         WHEN inep.NO_ENTIDADE LIKE '%COLEGIO DEMOCRATICO ESTADUAL ANISIO TEIXEIRA TEMPO INTEGRAL%' THEN 'COLEGIO DEMOCRATICO ESTADUAL ANISIO TEIXEIRA'
+#         WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL ANTONIO CARLOS MAGALHAES TEMPO INTEGRAL%' THEN 'COLEGIO ESTADUAL ANTONIO CARLOS MAGALHAES'
+#         WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL ANTONIO RODRIGUES VIANA TEMPO INTEGRAL%' THEN 'COLEGIO ESTADUAL ANTONIO RODRIGUES VIANA'
+#         WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL ARISTIDES CEDRAZ DE OLIVEIRA TEMPO INTEGRAL%' THEN 'COLEGIO ESTADUAL ARISTIDES CEDRAZ DE OLIVEIRA'
+#         WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL CONCEICAO DO JACUIPE TEMPO INTEGRAL%' THEN 'COLEGIO ESTADUAL CONCEICAO DO JACUIPE'
+#         WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL DE BOQUIRA TEMPO INTEGRAL%' THEN 'COLEGIO ESTADUAL DE BOQUIRA'
+#         WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL DE COCOS TEMPO INTEGRAL' THEN 'COLEGIO ESTADUAL DE COCOS'
+#         WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL DE CONCEICAO DA FEIRA CECF TEMPO INTEGRAL%' THEN 'COLEGIO ESTADUAL DE CONCEICAO DA FEIRA CECF'
+#         WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL DE CORRENTINA %' THEN 'COLEGIO ESTADUAL DE CORRENTINA'
+#         WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL DE IBIQUERA TEMPO INTEGRAL%' THEN 'COLEGIO ESTADUAL DE IBIQUERA'
+#         WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL DE JEQUIE TEMPO INTEGRAL%' THEN 'COLEGIO ESTADUAL DE JEQUIE'
+#         WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL DE MALHADA DE PEDRAS TEMPO INTEGRAL%' THEN 'COLEGIO ESTADUAL DE MALHADA DE PEDRAS'
+#         WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL DE TEMPO INTEGRAL RUI BARBOSA TEMPO INTEGRAL%' THEN 'COLEGIO ESTADUAL DE RUI BARBOSA'
+#         WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL DEMOCRATICO QUITERIA MARIA DE JESUS TEMPO INTEGRAL%' THEN 'COLEGIO ESTADUAL DEMOCRATICO QUITERIA MARIA DE JESUS'
+#         WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL DINAH GONCALVES TEMPO INTEGRAL%' THEN 'COLEGIO ESTADUAL DINAH GONCALVES'
+#         WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL DO CAMPO ANNA JUNQUEIRA AYRES TOURINHO TEMPO INTEGRAL DISTRITO DE MATARIPE%' THEN 'COLEGIO ESTADUAL DO CAMPO ANNA JUNQUEIRA AYRES TOURINHO DISTRITO DE MATARIPE'
+#         WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL DO CAMPO DE CARNAIBA TEMPO INTEGRAL DISTRITO DE CARNAIBA%' THEN 'COLEGIO ESTADUAL DO CAMPO DE CARNAIBA DISTRITO DE CARNAIBA'
+#         WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL DO CAMPO MIGUEL MOREIRA DE CARVALHO DIST RODA VELHA%' THEN 'COLEGIO ESTADUAL DO CAMPO MIGUEL MOREIRA DE CARVALHO DIST RODA VELHA'
+#         WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL DO CAMPO JORGE CALMON DISTRITO DE OLIVENCA TEMPO INTEGRAL%' THEN 'COLEGIO ESTADUAL DO CAMPO JORGE CALMON DISTRITO DE OLIVENCA'
+#         WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL DO CAMPO MIGUEL MOREIRA DE CARVALHO DIST RODA VELHA%' THEN 'COLEGIO ESTADUAL DO CAMPO MIGUEL MOREIRA DE CARVALHO DISTRITO DE RODA VELHA'
+#         WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL DO STIEP CARLOS MARIGHELLA TEMPO INTEGRAL%' THEN 'COLEGIO ESTADUAL DO STIEP CARLOS MARIGHELLA'
+#         WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL DOM PEDRO I TEMPO INTEGRAL%' THEN 'COLEGIO ESTADUAL DOM PEDRO I'
+#         WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL DR ANTONIO CARLOS MAGALHAES TEMPO INTEGRAL%' THEN 'COLEGIO ESTADUAL DR ANTONIO CARLOS MAGALHAES'
+#         WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL DOUTOR IVES ORLANDO LOPES DA SILVA TEMPO INTEGRAL%' THEN 'COLEGIO ESTADUAL DOUTOR IVES ORLANDO LOPES DA SILVA'
+#         WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL DOUTOR JOSE ANTONIO DE ARAUJO PIMENTA TEMPO INTEGRAL%' THEN 'COLEGIO ESTADUAL DOUTOR JOSE ANTONIO DE ARAUJO PIMENTA'
+#         WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL EDVALDO FLORES TEMPO INTEGRAL%' THEN 'COLEGIO ESTADUAL EDVALDO FLORES'
+#         WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL ERALDO TINOCO TEMPO INTEGRAL%' THEN 'COLEGIO ESTADUAL ERALDO TINOCO'
+#         WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL ERNESTO CARNEIRO RIBEIRO TEMPO INTEGRAL%' THEN 'COLEGIO ESTADUAL ERNESTO CARNEIRO RIBEIRO'
+#         WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL EVANDRO BRANDAO TEMPO INTEGRAL%' THEN 'COLEGIO ESTADUAL EVANDRO BRANDAO'
+#         WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL GENTIL PARAISO MARTINS TEMPO INTEGRAL%' THEN 'COLEGIO ESTADUAL GENTIL PARAISO MARTINS'
+#         WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL GOVERNADOR LUIZ VIANA FILHO TEMPO INTEGRAL%' THEN 'COLEGIO ESTADUAL GOVERNADOR LUIZ VIANA FILHO'
+#         WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL GRANDES MESTRES BRASILEIROS EM TEMPO INTEGRAL%' THEN 'COLEGIO ESTADUAL GRANDES MESTRES BRASILEIROS'
+#         WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL GRANDES MESTRES BRASILEIROS TEMPO INTEGRAL%' THEN 'COLEGIO ESTADUAL GRANDES MESTRES BRASILEIROS'
+#         WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL JOAO BENEVIDES NOGUEIRA EM TEMPO INTEGRAL%' THEN 'COLEGIO ESTADUAL JOAO BENEVIDES NOGUEIRA'
+#         WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL JOAO BENEVIDES NOGUEIRA TEMPO INTEGRAL%' THEN 'COLEGIO ESTADUAL JOAO BENEVIDES NOGUEIRA'
+#         WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL JORGE CALMON DISTRITO DE OLIVENCA TEMPO INTEGRAL%' THEN 'COLEGIO ESTADUAL JORGE CALMON DISTRITO DE OLIVENCA'
+#         WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL JOSE DANTAS DE SOUZA TEMPO INTEGRAL%' THEN 'COLEGIO ESTADUAL JOSE DANTAS DE SOUZA'
+#         WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL JOSE DE FREITAS MASCARENHAS TEMPO INTEGRAL%' THEN 'COLEGIO ESTADUAL JOSE DE FREITAS MASCARENHAS'
+#         WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL JOSE RIBEIRO DE ARAUJO TEMPO INTEGRAL%' THEN 'COLEGIO ESTADUAL JOSE RIBEIRO DE ARAUJO'
+#         WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL JOSE RIBEIRO PAMPONET TEMPO INTEGRAL%' THEN 'COLEGIO ESTADUAL JOSE RIBEIRO PAMPONET'
+#         WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL JOSE VICENTE LEAL EM TEMPO INTEGRAL%' THEN 'COLEGIO ESTADUAL JOSE VICENTE LEAL'
+#         WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL JOSE VICENTE LEAL TEMPO INTEGRAL%' THEN 'COLEGIO ESTADUAL JOSE VICENTE LEAL'
+#         WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL LUIS EDUARDO MAGALHAES TEMPO INTEGRAL%' THEN 'COLEGIO ESTADUAL LUIS EDUARDO MAGALHAES'
+#         WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL LUIS NAVARRO DE BRITO TEMPO INTEGRAL%' THEN 'COLEGIO ESTADUAL LUIS NAVARRO DE BRITO'
+#         WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL LUIZ ROGERIO DE SOUZA TEMPO INTEGRAL%' THEN 'COLEGIO ESTADUAL LUIZ ROGERIO DE SOUZA'
+#         WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL LUIZ VIANA FILHO TEMPO INTEGRAL%' THEN 'COLEGIO ESTADUAL LUIZ VIANA FILHO'
+#         WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL LUIZ VIANA TEMPO INTEGRAL%' THEN 'COLEGIO ESTADUAL LUIZ VIANA'
+#         WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL MANDINHO DE SOUZA ALMEIDA TEMPO INTEGRAL%' THEN 'COLEGIO ESTADUAL MANDINHO DE SOUZA ALMEIDA'
+#         WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL MANOEL FRANCISCO DE CAIRES EM TEMPO INTEGRAL%' THEN 'COLEGIO ESTADUAL MANOEL FRANCISCO DE CAIRES'
+#         WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL MARIA OTILIA LUTZ - BAIRRO JARDIM DAS ACACIAS - TEMPO INTEGRAL%' THEN 'COLEGIO ESTADUAL MARIA OTILIA LUTZ - BAIRRO JARDIM DAS ACACIAS'
+#         WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL MARIA OTILIA LUTZ BAIRRO JARDIM DAS ACACIAS TEMPO INTEGRAL%' THEN 'COLEGIO ESTADUAL MARIA OTILIA LUTZ BAIRRO JARDIM DAS ACACIAS'
+#         WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL MINISTRO OLIVEIRA BRITO - TEMPO INTEGRAL%' THEN 'COLEGIO ESTADUAL MINISTRO OLIVEIRA BRITO'
+#         WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL MINISTRO OLIVEIRA BRITO TEMPO INTEGRAL%' THEN 'COLEGIO ESTADUAL MINISTRO OLIVEIRA BRITO'
+#         WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL MONSENHOR TURIBIO VILANOVA TEMPO INTEGRAL%' THEN 'COLEGIO ESTADUAL MONSENHOR TURIBIO VILANOVA'
+#         WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL NEMISIA RIBEIRO DOS SANTOS TEMPO INTEGRAL%' THEN 'COLEGIO ESTADUAL NEMISIA RIBEIRO DOS SANTOS'
+#         WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL NERCY ANTONIO DUARTE TEMPO INTEGRAL%' THEN 'COLEGIO ESTADUAL NERCY ANTONIO DUARTE'
+#         WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL NOSSA SENHORA DA CONCEICAO TEMPO INTEGRAL%' THEN 'COLEGIO ESTADUAL NOSSA SENHORA DA CONCEICAO'
+#         WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL NOSSA SENHORA DO ROSARIO TEMPO INTEGRAL%' THEN 'COLEGIO ESTADUAL NOSSA SENHORA DO ROSARIO'
+#         WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL OCTACILIO MANOEL GOMES TEMPO INTEGRAL%' THEN 'COLEGIO ESTADUAL OCTACILIO MANOEL GOMES'
+#         WHEN inep.NO_ENTIDADE LIKE '%COLEGIO ESTADUAL OLAVO ALVES PINTO%' THEN 'COLEGIO ESTADUAL OLAVO ALVES PINTO'
 
-        ELSE inep.NO_ENTIDADE END AS NO_ENTIDADE,
+#         ELSE inep.NO_ENTIDADE END AS NO_ENTIDADE,
     
-    SUM(inep.QTD_MAT) QTD_MAT_CONC
+#     SUM(inep.QTD_MAT) QTD_MAT_CONC
 
-FROM 
-    INEP_BA_CTE inep
+# FROM 
+#     INEP_BA_CTE inep
 
-LEFT JOIN 
-    DB_OBSERVATORIO.referencia.dimensao_territorio_territorio_identidade dim_terri ON inep.CO_MUNICIPIO = dim_terri.CO_MUN_IBGE_7
-GROUP BY 
-   inep.ANO, dim_terri.NO_MUNICIPIO, inep.CURSO, inep.NO_ENTIDADE
-HAVING 
-   SUM(inep.QTD_MAT) > 0
-ORDER BY  inep.ANO DESC
-''')
+# LEFT JOIN 
+#     DB_OBSERVATORIO.referencia.dimensao_territorio_territorio_identidade dim_terri ON inep.CO_MUNICIPIO = dim_terri.CO_MUN_IBGE_7
+# GROUP BY 
+#    inep.ANO, dim_terri.NO_MUNICIPIO, inep.CURSO, inep.NO_ENTIDADE
+# HAVING 
+#    SUM(inep.QTD_MAT) > 0
+# ORDER BY  inep.ANO DESC
+# ''')
 
-df_curso_tec_inep['NO_MUNICIPIO_COD'] = limpar_texto(df_curso_tec_inep['NO_MUNICIPIO'])
-df_curso_tec_inep_1 = df_curso_tec_inep.merge(municipio_unid[['MUNICIPIO','UNIDADE','MUNICIPIO_COD']], 
-                            left_on='NO_MUNICIPIO_COD', right_on='MUNICIPIO_COD', how='left').drop(
-                                columns=['MUNICIPIO_COD','NO_MUNICIPIO', 'NO_MUNICIPIO_COD'], errors='ignore')
-df_curso_tec_inep_2 = df_curso_tec_inep_1.groupby(['ANO', 'CURSO','UNIDADE','NO_ENTIDADE'], as_index=False).agg({'NO_ENTIDADE':'nunique', 
-                                                                                            'QTD_MAT_CONC':'mean'})
-df_curso_tec_inep_2.rename(columns={'NO_ENTIDADE':'QTD_CONC'}, inplace=True)
+# df_curso_tec_inep['NO_MUNICIPIO_COD'] = limpar_texto(df_curso_tec_inep['NO_MUNICIPIO'])
+# df_curso_tec_inep_1 = df_curso_tec_inep.merge(municipio_unid[['MUNICIPIO','UNIDADE','MUNICIPIO_COD']], 
+#                             left_on='NO_MUNICIPIO_COD', right_on='MUNICIPIO_COD', how='left').drop(
+#                                 columns=['MUNICIPIO_COD','NO_MUNICIPIO', 'NO_MUNICIPIO_COD'], errors='ignore')
+# df_curso_tec_inep_2 = df_curso_tec_inep_1.groupby(['ANO', 'CURSO','UNIDADE','NO_ENTIDADE'], as_index=False).agg({'NO_ENTIDADE':'nunique', 
+#                                                                                             'QTD_MAT_CONC':'mean'})
+# df_curso_tec_inep_2.rename(columns={'NO_ENTIDADE':'QTD_CONC'}, inplace=True)
 
-df_curso_tec_inep_2['QTD_CONC'] = df_curso_tec_inep_2['QTD_CONC'].astype(int)
-df_curso_tec_inep_2['QTD_MAT_CONC'] = df_curso_tec_inep_2['QTD_MAT_CONC'].astype(int)
-# df_curso_tec_inep_2 = pd.read_excel(r"C:\Users\anderson.pereira\OneDrive - Sistema FIEB\Inteligência de Mercado\Data Science\DeploymentML\Streamlit_dsim_ML\df_curso_tec_inep_2.xlsx")
+# df_curso_tec_inep_2['QTD_CONC'] = df_curso_tec_inep_2['QTD_CONC'].astype(int)
+# df_curso_tec_inep_2['QTD_MAT_CONC'] = df_curso_tec_inep_2['QTD_MAT_CONC'].astype(int)
+df_curso_tec_inep_2 = pd.read_excel(r"C:\Users\anderson.pereira\OneDrive - Sistema FIEB\Inteligência de Mercado\Data Science\DeploymentML\Streamlit_dsim_ML\df_curso_tec_inep_2.xlsx")
 
 
 ####################################################################################################
@@ -641,40 +639,40 @@ concorrencia_sistec['QTD_MAT_CONC'] = 0
 
 ####################################################################################################
 # >>>>>>> - FONTE BOLSA FAMILIA - <<<<<<< #
-df_bolsaf = consulta('''
-SELECT
-      year(bolsa.referencia) as ANO
-      ,bolsa.familias_pbf_pos_2023 as QTD_FAMILIAS
-      ,bolsa.valor_repasse_familias_pbf_a_partir_2023 as TOTAL_REPASSE
-      ,bolsa.valor_beneficio_medio_apos_mar_2023 as VLR_MEDIO_BENEFICIO
-      ,CASE WHEN dim_terri.NO_MUNICIPIO = 'CAMACARI' THEN 'CAMAÇARI'
-            WHEN dim_terri.NO_MUNICIPIO = 'EUNAPOLIS' THEN 'EUNÁPOLIS'
-            WHEN dim_terri.NO_MUNICIPIO = 'ILHEUS' THEN 'ILHÉUS'
-            WHEN dim_terri.NO_MUNICIPIO = 'VITORIA DA CONQUISTA' THEN 'VITÓRIA DA CONQUISTA'
-            WHEN dim_terri.NO_MUNICIPIO = 'JEQUIE' THEN 'JEQUIÉ'
-            WHEN dim_terri.NO_MUNICIPIO = 'LUIS EDUARDO MAGALHAES' THEN 'LUÍS EDUARDO MAGALHÃES'
-            WHEN dim_terri.NO_MUNICIPIO = 'SENHOR DO BONFIN' THEN 'SENHOR DO BONFIM'
-            WHEN dim_terri.NO_MUNICIPIO = 'SANTO ANTONIO DE JESUS' THEN 'SANTO ANTÔNIO DE JESUS'
-            WHEN dim_terri.NO_MUNICIPIO = 'SAO GONCALO DOS CAMPOS' THEN 'SÃO GONÇALO DOS CAMPOS'
-            WHEN dim_terri.NO_MUNICIPIO = 'SAO SEBASTIAO DO PASSE' THEN 'SÃO SEBASTIÃO DO PASSE'
-            WHEN dim_terri.NO_MUNICIPIO = 'SAO FELIPE' THEN 'SÃO FELIPE'
-            WHEN dim_terri.NO_MUNICIPIO = 'SAO FRANCISCO DO CONDE' THEN 'SÃO FRANCISCO DO CONDE'
-            WHEN dim_terri.NO_MUNICIPIO = 'SIMOES FILHO' THEN 'SIMÕES FILHO' ELSE dim_terri.NO_MUNICIPIO END AS NO_MUNICIPIO  
-FROM DB_OBSERVATORIO.cadunico.bolsa_familia_familias bolsa
-LEFT JOIN DB_OBSERVATORIO.referencia.dimensao_territorio_territorio_identidade dim_terri ON bolsa.CO_MUN_IBGE_6 = dim_terri.CO_MUN_IBGE_6
-WHERE YEAR(bolsa.referencia) IN (2023, 2024, 2025) AND bolsa.uf = 'BA'
-ORDER BY dim_terri.NO_MUNICIPIO, year(bolsa.referencia)
-;
-''')
+# df_bolsaf = consulta('''
+# SELECT
+#       year(bolsa.referencia) as ANO
+#       ,bolsa.familias_pbf_pos_2023 as QTD_FAMILIAS
+#       ,bolsa.valor_repasse_familias_pbf_a_partir_2023 as TOTAL_REPASSE
+#       ,bolsa.valor_beneficio_medio_apos_mar_2023 as VLR_MEDIO_BENEFICIO
+#       ,CASE WHEN dim_terri.NO_MUNICIPIO = 'CAMACARI' THEN 'CAMAÇARI'
+#             WHEN dim_terri.NO_MUNICIPIO = 'EUNAPOLIS' THEN 'EUNÁPOLIS'
+#             WHEN dim_terri.NO_MUNICIPIO = 'ILHEUS' THEN 'ILHÉUS'
+#             WHEN dim_terri.NO_MUNICIPIO = 'VITORIA DA CONQUISTA' THEN 'VITÓRIA DA CONQUISTA'
+#             WHEN dim_terri.NO_MUNICIPIO = 'JEQUIE' THEN 'JEQUIÉ'
+#             WHEN dim_terri.NO_MUNICIPIO = 'LUIS EDUARDO MAGALHAES' THEN 'LUÍS EDUARDO MAGALHÃES'
+#             WHEN dim_terri.NO_MUNICIPIO = 'SENHOR DO BONFIN' THEN 'SENHOR DO BONFIM'
+#             WHEN dim_terri.NO_MUNICIPIO = 'SANTO ANTONIO DE JESUS' THEN 'SANTO ANTÔNIO DE JESUS'
+#             WHEN dim_terri.NO_MUNICIPIO = 'SAO GONCALO DOS CAMPOS' THEN 'SÃO GONÇALO DOS CAMPOS'
+#             WHEN dim_terri.NO_MUNICIPIO = 'SAO SEBASTIAO DO PASSE' THEN 'SÃO SEBASTIÃO DO PASSE'
+#             WHEN dim_terri.NO_MUNICIPIO = 'SAO FELIPE' THEN 'SÃO FELIPE'
+#             WHEN dim_terri.NO_MUNICIPIO = 'SAO FRANCISCO DO CONDE' THEN 'SÃO FRANCISCO DO CONDE'
+#             WHEN dim_terri.NO_MUNICIPIO = 'SIMOES FILHO' THEN 'SIMÕES FILHO' ELSE dim_terri.NO_MUNICIPIO END AS NO_MUNICIPIO  
+# FROM DB_OBSERVATORIO.cadunico.bolsa_familia_familias bolsa
+# LEFT JOIN DB_OBSERVATORIO.referencia.dimensao_territorio_territorio_identidade dim_terri ON bolsa.CO_MUN_IBGE_6 = dim_terri.CO_MUN_IBGE_6
+# WHERE YEAR(bolsa.referencia) IN (2023, 2024, 2025) AND bolsa.uf = 'BA'
+# ORDER BY dim_terri.NO_MUNICIPIO, year(bolsa.referencia)
+# ;
+# ''')
 
-df_bolsaf['NO_MUNICIPIO_COD'] = limpar_texto(df_bolsaf['NO_MUNICIPIO'])
-df_bolsaf_1 = df_bolsaf.merge(municipio_unid[['MUNICIPIO','UNIDADE','MUNICIPIO_COD']], 
-                            left_on='NO_MUNICIPIO_COD', right_on='MUNICIPIO_COD', how='left').drop(
-                                columns=['MUNICIPIO_COD','NO_MUNICIPIO', 'NO_MUNICIPIO_COD'], errors='ignore')
-df_bolsaf_2 = df_bolsaf_1.groupby(['ANO','UNIDADE'], as_index=False).agg({'QTD_FAMILIAS':'sum', 
-                                                                          'TOTAL_REPASSE':'sum', 
-                                                                          'VLR_MEDIO_BENEFICIO':'mean'})
-# df_bolsaf_2 = pd.read_excel(r"C:\Users\anderson.pereira\OneDrive - Sistema FIEB\Inteligência de Mercado\Data Science\DeploymentML\dsim-recomendacao-de-curso\df_bolsaf_2.xlsx")
+# df_bolsaf['NO_MUNICIPIO_COD'] = limpar_texto(df_bolsaf['NO_MUNICIPIO'])
+# df_bolsaf_1 = df_bolsaf.merge(municipio_unid[['MUNICIPIO','UNIDADE','MUNICIPIO_COD']], 
+#                             left_on='NO_MUNICIPIO_COD', right_on='MUNICIPIO_COD', how='left').drop(
+#                                 columns=['MUNICIPIO_COD','NO_MUNICIPIO', 'NO_MUNICIPIO_COD'], errors='ignore')
+# df_bolsaf_2 = df_bolsaf_1.groupby(['ANO','UNIDADE'], as_index=False).agg({'QTD_FAMILIAS':'sum', 
+#                                                                           'TOTAL_REPASSE':'sum', 
+#                                                                           'VLR_MEDIO_BENEFICIO':'mean'})
+df_bolsaf_2 = pd.read_excel(r"C:\Users\anderson.pereira\OneDrive - Sistema FIEB\Inteligência de Mercado\Data Science\DeploymentML\dsim-recomendacao-de-curso\df_bolsaf_2.xlsx")
 
 
 ####################################################################################################
