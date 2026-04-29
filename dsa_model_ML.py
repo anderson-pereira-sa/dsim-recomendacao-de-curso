@@ -906,7 +906,7 @@ with tab2:
         cenarios_sel = st.multiselect(
             "Cenários para comparação",
             [ 'Simulado','Base', 'Conservador', 'Otimista'],
-            default=['Simulado','Base', 'Otimista'])
+            default=['Simulado','Otimista'])
     
     # 2️⃣ Filtra cenários por UNIDADE
     df_base_u = df_base_2026[df_base_2026['UNIDADE'].isin(unidades_sel)]
