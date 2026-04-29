@@ -417,10 +417,7 @@ def gerar_matriz_curso_unidade_futuro(df_historico, ano_futuro, cenario="base"):
             # CASO 2 — Curso nunca existiu na unidade
             # ======================================================
             else:
-                df_curso_global = df_historico[
-                    df_historico['CURSO'] == curso
-                ]
-
+                df_curso_global = df_historico[df_historico['CURSO'] == curso]
                 if df_curso_global.empty:
                     continue  # curso sem histórico nenhum
 
@@ -480,6 +477,92 @@ def formatar_recomendacao_celula(faixa_dominante, prob_max):
         icone = "⚠️"
 
     return f"{icone} {faixa_dominante} ({prob_pct}%)"
+
+
+@st.cache_data
+def gerar_cenarios_futuros_cache(df_matricula, ano_futuro):
+    df_base = gerar_matriz_curso_unidade_futuro(
+        df_historico=df_matricula,
+        ano_futuro=ano_futuro,
+        cenario="base")
+
+    df_conservador = gerar_matriz_curso_unidade_futuro(
+        df_historico=df_matricula,
+        ano_futuro=ano_futuro,
+        cenario="conservador")
+
+    df_otimista = gerar_matriz_curso_unidade_futuro(
+        df_historico=df_matricula,
+        ano_futuro=ano_futuro,
+        cenario="otimista")
+    return df_base, df_conservador, df_otimista
+
+
+@st.cache_data
+def gerar_simulado_chp_cache(
+    df_matricula,
+    linha_sim,
+    curso_sel,
+    emp_sim,
+    bf_sim,
+    conc_sim,
+    saldo_sim,
+    unidade_sel
+):
+    resultados_simulados = []
+
+    stats_curso_global = (
+        df_matricula
+        .groupby('CURSO')
+        .agg(
+            SALDO_EMPREGO_MEDIO=('SALDO_EMPREGO', 'mean'),
+            SALARIO_MEDIO_MEDIO=('SALARIO_MEDIO', 'mean')
+        )
+    )
+
+    for curso in df_matricula['CURSO'].unique():
+
+        if curso == curso_sel:
+            linha_simulada = linha_sim.copy(deep=True)
+            linha_simulada['CURSO'] = curso
+            linha_simulada['ANO'] = 2026
+        else:
+            if curso not in stats_curso_global.index:
+                continue
+
+            linha_simulada = linha_sim.copy(deep=True)
+            linha_simulada['CURSO'] = curso
+            linha_simulada['ANO'] = 2026
+
+            # Variáveis dependentes da CBO
+            linha_simulada['SALDO_EMPREGO'] = stats_curso_global.loc[curso, 'SALDO_EMPREGO_MEDIO']
+            linha_simulada['SALARIO_MEDIO'] = stats_curso_global.loc[curso, 'SALARIO_MEDIO_MEDIO']
+
+            # Variáveis locais
+            linha_simulada['QTD_EMPRESAS'] = emp_sim
+            linha_simulada['VLR_MEDIO_BENEFICIO'] = bf_sim
+            linha_simulada['QTD_CONC'] = conc_sim
+            linha_simulada['SALDO_EMPREGO'] = saldo_sim
+
+        X = build_X(linha_simulada)
+        probs = modelo.predict_proba(X)[0]
+
+        faixa_idx = int(np.argmax(probs))
+        faixa_nome = FAIXAS[faixa_idx]
+        prob_max = float(np.max(probs))
+
+        recomendacao = formatar_recomendacao_celula(
+            faixa_dominante=faixa_nome,
+            prob_max=prob_max
+        )
+
+        resultados_simulados.append({
+            'CURSO': curso,
+            'RECOM_SIMULADO': recomendacao
+        })
+
+    return pd.DataFrame(resultados_simulados)
+
 
 # ==========================================================
 # ABAS
@@ -707,9 +790,31 @@ with tab2:
     # CENÁRIO SIMULADO (DERIVADO DO SIMULADOR)
     # ==========================================================
 
+    # ==========================================================
+# CENÁRIO SIMULADO (DERIVADO DO SIMULADOR) – OTIMIZADO
+# ==========================================================
+
     resultados_simulados = []
 
-    for curso in df_matricula['CURSO'].unique():
+    # ✅ Estatísticas globais por CURSO (CBO) – calculadas uma única vez
+    stats_curso_global = (
+        df_matricula
+        .groupby('CURSO')
+        .agg(
+            SALDO_EMPREGO_MEDIO=('SALDO_EMPREGO', 'mean'),
+            SALARIO_MEDIO_MEDIO=('SALARIO_MEDIO', 'mean')
+        )
+    )
+
+    # ✅ Último registro global por CURSO (evita sort/iloc no loop)
+    ultimo_registro_curso = (
+        df_matricula
+        .sort_values('ANO')
+        .groupby('CURSO', as_index=False)
+        .last()
+    )
+
+    for curso in ultimo_registro_curso['CURSO'].unique():
 
         # ======================================================
         # CASO 1 — CURSO SELECIONADO (USA SIMULADOR)
@@ -721,32 +826,29 @@ with tab2:
             linha_simulada['ANO'] = 2026
 
         # ======================================================
-        # CASO 2 — OUTROS CURSOS (USA ÚLTIMO ANO)
+        # CASO 2 — OUTROS CURSOS (FALLBACK INTELIGENTE)
         # ======================================================
         else:
-            df_curso_global = df_matricula[
-                df_matricula['CURSO'] == curso]
-
-            if df_curso_global.empty:
+            if curso not in stats_curso_global.index:
                 continue  # curso realmente inexistente
 
-            # Base global do curso (CBO)
             linha_simulada = (
-                df_curso_global
-                .sort_values('ANO')
-                .iloc[-1]
+                ultimo_registro_curso[
+                    ultimo_registro_curso['CURSO'] == curso
+                ]
+                .iloc[0]
                 .copy(deep=True)
-                )
-        
+            )
+
             linha_simulada['ANO'] = 2026
             linha_simulada['CURSO'] = curso
             linha_simulada['UNIDADE'] = unidade_sel
 
             # ✅ Variáveis dependentes da CBO → média das unidades
-            linha_simulada['SALDO_EMPREGO'] = df_curso_global['SALDO_EMPREGO'].mean()
-            linha_simulada['SALARIO_MEDIO'] = df_curso_global['SALARIO_MEDIO'].mean()
+            linha_simulada['SALDO_EMPREGO'] = stats_curso_global.loc[curso, 'SALDO_EMPREGO_MEDIO']
+            linha_simulada['SALARIO_MEDIO'] = stats_curso_global.loc[curso, 'SALARIO_MEDIO_MEDIO']
 
-            # ✅ Variáveis locais → valores da unidade simulada
+            # ✅ Variáveis locais → valores simulados da unidade
             linha_simulada['QTD_EMPRESAS'] = emp_sim
             linha_simulada['VLR_MEDIO_BENEFICIO'] = bf_sim
             linha_simulada['QTD_CONC'] = conc_sim
@@ -772,29 +874,13 @@ with tab2:
         })
 
     df_simulado_2026 = pd.DataFrame(resultados_simulados)
-
-
+    
     # ==========================================================
     # GERA MATRIZES FUTURAS POR CENÁRIO
-    # ==========================================================
+    # ==========================================================   
+    df_base_2026, df_conservador_2026, df_otimista_2026 = gerar_cenarios_futuros_cache(
+       df_matricula, ano_futuro=2026)
 
-    df_base_2026 = gerar_matriz_curso_unidade_futuro(
-        df_historico=df_matricula,
-        ano_futuro=2026,
-        cenario="base"
-    )
-
-    df_conservador_2026 = gerar_matriz_curso_unidade_futuro(
-        df_historico=df_matricula,
-        ano_futuro=2026,
-        cenario="conservador"
-    )
-
-    df_otimista_2026 = gerar_matriz_curso_unidade_futuro(
-        df_historico=df_matricula,
-        ano_futuro=2026,
-        cenario="otimista"
-    )
    
     # ==========================================================
     # FILTRA PARA A UNIDADE SELECIONADA
