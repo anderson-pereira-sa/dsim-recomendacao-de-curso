@@ -881,22 +881,26 @@ with tab2:
     df_base_2026, df_conservador_2026, df_otimista_2026 = gerar_cenarios_futuros_cache(
        df_matricula, ano_futuro=2026)
 
-   
     # ==========================================================
     # FILTRA PARA A UNIDADE SELECIONADA
     # ==========================================================
     #  Filtros (ANTES DE TUDO)
-    unidades_sel = st.multiselect(
-        "Unidades para Recomendações (CHP)",
-        sorted(df_matricula['UNIDADE'].unique()),
-        default=[unidade_sel]
-    )
+    c_un_sel_recom, c_cur_sel_recom = st.columns([1.2, 1.0])
+    with c_un_sel_recom:
+        unidades_sel = st.multiselect(
+            "Unidades para Recomendações (CHP)",
+            sorted(df_matricula['UNIDADE'].unique()),
+            default=[unidade_sel]
+        )   
 
-    cenarios_sel = st.multiselect(
-        "Cenários para comparação",
-        ['Base', 'Conservador', 'Otimista', 'Simulado'],
-        default=['Base', 'Otimista', 'Simulado']
-    )
+    with c_cur_sel_recom:
+        cenarios_sel = st.multiselect(
+            "Cenários para comparação",
+            [ 'Simulado','Base', 'Conservador', 'Otimista'],
+            default=['Simulado','Base', 'Otimista']
+        )
+    
+
 
     # 2️⃣ Filtra cenários por UNIDADE
     df_base_u = df_base_2026[df_base_2026['UNIDADE'].isin(unidades_sel)]
