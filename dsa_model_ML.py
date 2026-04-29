@@ -356,21 +356,21 @@ def gerar_cenario_futuro(linha_base, ano_futuro, cenario="base"):
 
     if cenario == "conservador":
         linha['SALDO_EMPREGO'] *= 1.00
-        linha['QTD_CONC'] *= 1.05
-        linha['SALARIO_MEDIO'] *= 1.02
+        linha['QTD_CONC'] *= 1.02
+        linha['SALARIO_MEDIO'] *= 1.05
         linha['VLR_MEDIO_BENEFICIO'] *= 1.02
 
     elif cenario == "otimista":
-        linha['SALDO_EMPREGO'] *= 1.10
-        linha['QTD_CONC'] *= 0.95
-        linha['SALARIO_MEDIO'] *= 1.05
+        linha['SALDO_EMPREGO'] *= 1.20
+        linha['QTD_CONC'] *= 1.0
+        linha['SALARIO_MEDIO'] *= 1.10
         linha['VLR_MEDIO_BENEFICIO'] *= 1.03
 
     else:  # cenário base
-        linha['SALDO_EMPREGO'] *= 0.95
-        linha['QTD_CONC'] *= 1.05
-        linha['SALARIO_MEDIO'] *= 1.03
-        linha['VLR_MEDIO_BENEFICIO'] *= 1.02
+        linha['SALDO_EMPREGO'] *= 1.0
+        linha['QTD_CONC'] *= 1.0
+        linha['SALARIO_MEDIO'] *= 1.0
+        linha['VLR_MEDIO_BENEFICIO'] *= 1.0
 
     return linha
 
@@ -874,7 +874,7 @@ with tab2:
         })
 
     df_simulado_2026 = pd.DataFrame(resultados_simulados)
-    
+
     # ==========================================================
     # GERA MATRIZES FUTURAS POR CENÁRIO
     # ==========================================================   
