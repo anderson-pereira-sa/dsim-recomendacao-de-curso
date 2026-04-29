@@ -885,23 +885,29 @@ with tab2:
     # FILTRA PARA A UNIDADE SELECIONADA
     # ==========================================================
     #  Filtros (ANTES DE TUDO)
-    c_un_sel_recom, c_cur_sel_recom = st.columns([1.2, 1.0])
-    with c_un_sel_recom:
+    col1_sel_recom, col2_sel_recom = st.columns([1.2, 1.0])
+    with col1_sel_recom:
+        st.markdown("""
+        **Legenda das Recomendações:**
+
+        - ✅ **Recomendar fortemente** – Alta probabilidade na faixa *Acima de 40*
+        - 🟢 **Recomendar** – Probabilidade favorável na faixa *Acima de 40*
+        - 🟡 **Oferta com cautela** – Faixa *Entre 21 e 40*
+        - 🔴 **Não priorizar** – Faixa *Abaixo de 21*
+        - ⚠️ **Analisar manualmente** – Cenário indefinido ou instável
+        """)
+
+    with col2_sel_recom:
         unidades_sel = st.multiselect(
             "Unidades para Recomendações (CHP)",
             sorted(df_matricula['UNIDADE'].unique()),
-            default=[unidade_sel]
-        )   
+            default=[unidade_sel]) 
 
-    with c_cur_sel_recom:
         cenarios_sel = st.multiselect(
             "Cenários para comparação",
             [ 'Simulado','Base', 'Conservador', 'Otimista'],
-            default=['Simulado','Base', 'Otimista']
-        )
+            default=['Simulado','Base', 'Otimista'])
     
-
-
     # 2️⃣ Filtra cenários por UNIDADE
     df_base_u = df_base_2026[df_base_2026['UNIDADE'].isin(unidades_sel)]
     df_cons_u = df_conservador_2026[df_conservador_2026['UNIDADE'].isin(unidades_sel)]
@@ -954,15 +960,6 @@ with tab2:
     # EXIBE TABELA
     # ==========================================================
 
-    st.markdown("""
-        **Legenda das Recomendações:**
-
-        - ✅ **Recomendar fortemente** – Alta probabilidade na faixa *Acima de 40*
-        - 🟢 **Recomendar** – Probabilidade favorável na faixa *Acima de 40*
-        - 🟡 **Oferta com cautela** – Faixa *Entre 21 e 40*
-        - 🔴 **Não priorizar** – Faixa *Abaixo de 21*
-        - ⚠️ **Analisar manualmente** – Cenário indefinido ou instável
-        """)
     
 
     df_base_u = df_base_u.groupby('CURSO', as_index=False).first()
