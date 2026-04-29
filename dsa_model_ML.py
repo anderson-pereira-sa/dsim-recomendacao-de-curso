@@ -807,7 +807,7 @@ with tab2:
         st.plotly_chart(pizza_sim(probs_sim, "Distribuição SIMULADA"), True)
 
         st.sidebar.divider()
-        st.sidebar.subheader("####🚨 Variáveis mais influentes")
+        st.sidebar.subheader("🚨 Variáveis mais influentes")
         for v, i in pd.Series(impactos).sort_values(key=abs, ascending=False).head(5).items():
             st.sidebar.write(f"▶ **{labels_exibicao.get(v, v)}** ({i*100:+.1f} p.p.)")
 
