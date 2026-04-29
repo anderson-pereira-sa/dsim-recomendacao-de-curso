@@ -724,27 +724,32 @@ with tab2:
         # CASO 2 — OUTROS CURSOS (USA ÚLTIMO ANO)
         # ======================================================
         else:
-            df_curso_hist = df_matricula[
-                (df_matricula['UNIDADE'] == unidade_sel) &
-                (df_matricula['CURSO'] == curso)
-            ]
+            df_curso_global = df_matricula[
+                df_matricula['CURSO'] == curso]
 
-            if df_curso_hist.empty:
-                continue
+            if df_curso_global.empty:
+                continue  # curso realmente inexistente
 
+            # Base global do curso (CBO)
             linha_simulada = (
-                df_curso_hist
+                df_curso_global
                 .sort_values('ANO')
                 .iloc[-1]
                 .copy(deep=True)
-            )
+                )
+        
             linha_simulada['ANO'] = 2026
+            linha_simulada['CURSO'] = curso
+            linha_simulada['UNIDADE'] = unidade_sel
 
-            # ✅ Regra: variáveis macro do simulado impactam TODOS
+            # ✅ Variáveis dependentes da CBO → média das unidades
+            linha_simulada['SALDO_EMPREGO'] = df_curso_global['SALDO_EMPREGO'].mean()
+            linha_simulada['SALARIO_MEDIO'] = df_curso_global['SALARIO_MEDIO'].mean()
+
+            # ✅ Variáveis locais → valores da unidade simulada
             linha_simulada['QTD_EMPRESAS'] = emp_sim
             linha_simulada['VLR_MEDIO_BENEFICIO'] = bf_sim
             linha_simulada['QTD_CONC'] = conc_sim
-            linha_simulada['SALDO_EMPREGO'] = saldo_sim
 
         # ======================================================
         # PREDIÇÃO
@@ -794,7 +799,7 @@ with tab2:
     # ==========================================================
     # FILTRA PARA A UNIDADE SELECIONADA
     # ==========================================================
-    # 1️⃣ Filtros (ANTES DE TUDO)
+    #  Filtros (ANTES DE TUDO)
     unidades_sel = st.multiselect(
         "Unidades para Recomendações (CHP)",
         sorted(df_matricula['UNIDADE'].unique()),
