@@ -678,7 +678,6 @@ with tab2:
         value=int(linha_real['SALDO_EMPREGO'])
     )
     
-
     # ---------- PROBABILIDADE REAL ----------
     probs_real = modelo.predict_proba(build_X(linha_real))[0]
 
@@ -807,16 +806,20 @@ with tab2:
 
         st.plotly_chart(pizza_sim(probs_sim, "Distribuição SIMULADA"), True)
 
-        var_sim, an_sim = st.columns(2)
+        st.sidebar.divider()
+        st.sidebar.subheader("####🚨 Variáveis mais influentes")
+        for v, i in pd.Series(impactos).sort_values(key=abs, ascending=False).head(5).items():
+            st.write(f"▶ **{labels_exibicao.get(v, v)}** ({i*100:+.1f} p.p.)")
 
-        with var_sim:
-            st.markdown("#### ✦ Variáveis mais influentes")
-            for v, i in pd.Series(impactos).sort_values(key=abs, ascending=False).head(5).items():
-                st.write(f"▶ **{labels_exibicao.get(v, v)}** ({i*100:+.1f} p.p.)")
+        # with var_sim:
+        #     st.markdown("#### ✦ Variáveis mais influentes")
+        #     for v, i in pd.Series(impactos).sort_values(key=abs, ascending=False).head(5).items():
+        #         st.write(f"▶ **{labels_exibicao.get(v, v)}** ({i*100:+.1f} p.p.)")
+        # var_sim, an_sim = st.columns(2)
+        # with an_sim:
 
-        with an_sim:
-            st.markdown("#### 🧠 Análise do cenário")
-            st.info(texto_exec)
+        st.markdown("#### 🧠 Análise do cenário")
+        st.info(texto_exec)
 
     st.divider()
     st.subheader("📜 Recomendações de Cursos – CHP")
