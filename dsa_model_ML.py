@@ -811,26 +811,16 @@ with tab2:
         for v, i in pd.Series(impactos).sort_values(key=abs, ascending=False).head(5).items():
             st.sidebar.write(f"▶ **{labels_exibicao.get(v, v)}** ({i*100:+.1f} p.p.)")
 
-        # with var_sim:
-        #     st.markdown("#### ✦ Variáveis mais influentes")
-        #     for v, i in pd.Series(impactos).sort_values(key=abs, ascending=False).head(5).items():
-        #         st.write(f"▶ **{labels_exibicao.get(v, v)}** ({i*100:+.1f} p.p.)")
-        # var_sim, an_sim = st.columns(2)
-        # with an_sim:
-
         st.markdown("#### 🧠 Análise do cenário")
         st.info(texto_exec)
 
     st.divider()
     st.subheader("📜 Recomendações de Cursos – CHP")
 
+
     # ==========================================================
     # CENÁRIO SIMULADO (DERIVADO DO SIMULADOR)
     # ==========================================================
-
-    # ==========================================================
-# CENÁRIO SIMULADO (DERIVADO DO SIMULADOR) – OTIMIZADO
-# ==========================================================
 
     resultados_simulados = []
 
@@ -1000,12 +990,13 @@ with tab2:
 
     
 
-    df_base_u = df_base_u.groupby('CURSO', as_index=False).first()
-    df_cons_u = df_cons_u.groupby('CURSO', as_index=False).first()
-    df_oti_u  = df_oti_u.groupby('CURSO', as_index=False).first()
+    # df_base_u = df_base_u.groupby('CURSO', as_index=False).first()
+    # df_cons_u = df_cons_u.groupby('CURSO', as_index=False).first()
+    # df_oti_u  = df_oti_u.groupby('CURSO', as_index=False).first()
 
-    if 'UNIDADE' in df_recom_unidade.columns:
-        df_recom_unidade = df_recom_unidade.drop(columns=['UNIDADE'])
+    # if 'UNIDADE' in df_recom_unidade.columns:
+    #     df_recom_unidade = df_recom_unidade.drop(columns=['UNIDADE'])
+
     st.dataframe(df_recom_unidade, use_container_width=True, hide_index=True)
 
     # ---------- RODAPÉ ----------
